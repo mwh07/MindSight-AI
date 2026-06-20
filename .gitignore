@@ -1,0 +1,15 @@
+# Ignore local datasets and model weights (The heavy stuff causing the error)
+
+# Ignore Python specific files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Ignore operating system files
+.DS_Store
+Thumbs.db

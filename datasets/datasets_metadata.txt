@@ -1,0 +1,130 @@
+=== METADATA REPORT: datasets ===
+Generated: 2026-06-17 15:01:25
+
+--- big_five_personality_clean.csv ---
+Rows: 49999
+Columns: 50
+Column names: EXT1, EXT2, EXT3, EXT4, EXT5, EXT6, EXT7, EXT8, EXT9, EXT10, EST1, EST2, EST3, EST4, EST5, EST6, EST7, EST8, EST9, EST10, AGR1, AGR2, AGR3, AGR4, AGR5, AGR6, AGR7, AGR8, AGR9, AGR10, CSN1, CSN2, CSN3, CSN4, CSN5, CSN6, CSN7, CSN8, CSN9, CSN10, OPN1, OPN2, OPN3, OPN4, OPN5, OPN6, OPN7, OPN8, OPN9, OPN10
+Data types: {'EXT1': 'float64', 'EXT2': 'float64', 'EXT3': 'float64', 'EXT4': 'float64', 'EXT5': 'float64', 'EXT6': 'float64', 'EXT7': 'float64', 'EXT8': 'float64', 'EXT9': 'float64', 'EXT10': 'float64', 'EST1': 'float64', 'EST2': 'float64', 'EST3': 'float64', 'EST4': 'float64', 'EST5': 'float64', 'EST6': 'float64', 'EST7': 'float64', 'EST8': 'float64', 'EST9': 'float64', 'EST10': 'float64', 'AGR1': 'float64', 'AGR2': 'float64', 'AGR3': 'float64', 'AGR4': 'float64', 'AGR5': 'float64', 'AGR6': 'float64', 'AGR7': 'float64', 'AGR8': 'float64', 'AGR9': 'float64', 'AGR10': 'float64', 'CSN1': 'float64', 'CSN2': 'float64', 'CSN3': 'float64', 'CSN4': 'float64', 'CSN5': 'float64', 'CSN6': 'float64', 'CSN7': 'float64', 'CSN8': 'float64', 'CSN9': 'float64', 'CSN10': 'float64', 'OPN1': 'float64', 'OPN2': 'float64', 'OPN3': 'float64', 'OPN4': 'float64', 'OPN5': 'float64', 'OPN6': 'float64', 'OPN7': 'float64', 'OPN8': 'float64', 'OPN9': 'float64', 'OPN10': 'float64'}
+
+Top 5 columns by missing %:
+  (No missing values)
+
+Numeric stats (first 5 numeric columns):
+  - EXT1: mean=2.65, min=1.0, max=5.0
+  - EXT2: mean=2.79, min=1.0, max=5.0
+  - EXT3: mean=3.30, min=1.0, max=5.0
+  - EXT4: mean=3.17, min=1.0, max=5.0
+  - EXT5: mean=3.30, min=1.0, max=5.0
+
+No categorical columns.
+
+==================================================
+
+--- internet_phq_loneliness_clean.csv ---
+Rows: 655
+Columns: 56
+Column names: age, gender, TotalIA, totalphq, categoryphq, lonelinesstotal, Lonelinesscategory, IAT1, IAT2, IAT3, IAT4, IAT5, IAT6, IAT7, IAT8, IAT9, IAT10, IAT11, IAT12, IAT13, IAT14, IAT15, IAT16, IAT17, IAT18, IAT19, IAT20, phq1, phq2, phq3, phq4, phq5, phq6, phq7, phq8, phq9, loneliness1, loneliness2, loneliness3, loneliness4, loneliness5, loneliness6, loneliness7, loneliness8, loneliness9, loneliness10, loneliness11, loneliness12, loneliness13, loneliness14, loneliness15, loneliness16, loneliness17, loneliness18, loneliness19, loneliness20
+Data types: {'age': 'int64', 'gender': 'object', 'TotalIA': 'int64', 'totalphq': 'int64', 'categoryphq': 'int64', 'lonelinesstotal': 'int64', 'Lonelinesscategory': 'int64', 'IAT1': 'int64', 'IAT2': 'int64', 'IAT3': 'int64', 'IAT4': 'int64', 'IAT5': 'int64', 'IAT6': 'int64', 'IAT7': 'int64', 'IAT8': 'int64', 'IAT9': 'int64', 'IAT10': 'int64', 'IAT11': 'int64', 'IAT12': 'int64', 'IAT13': 'int64', 'IAT14': 'int64', 'IAT15': 'int64', 'IAT16': 'int64', 'IAT17': 'int64', 'IAT18': 'int64', 'IAT19': 'int64', 'IAT20': 'int64', 'phq1': 'int64', 'phq2': 'int64', 'phq3': 'int64', 'phq4': 'int64', 'phq5': 'int64', 'phq6': 'int64', 'phq7': 'int64', 'phq8': 'int64', 'phq9': 'int64', 'loneliness1': 'int64', 'loneliness2': 'int64', 'loneliness3': 'int64', 'loneliness4': 'int64', 'loneliness5': 'int64', 'loneliness6': 'int64', 'loneliness7': 'int64', 'loneliness8': 'int64', 'loneliness9': 'int64', 'loneliness10': 'int64', 'loneliness11': 'int64', 'loneliness12': 'int64', 'loneliness13': 'int64', 'loneliness14': 'int64', 'loneliness15': 'int64', 'loneliness16': 'int64', 'loneliness17': 'int64', 'loneliness18': 'int64', 'loneliness19': 'int64', 'loneliness20': 'int64'}
+
+Top 5 columns by missing %:
+  (No missing values)
+
+Numeric stats (first 5 numeric columns):
+  - age: mean=15.82, min=13.0, max=19.0
+  - TotalIA: mean=20.01, min=0.0, max=94.0
+  - totalphq: mean=8.40, min=0.0, max=27.0
+  - categoryphq: mean=2.27, min=1.0, max=5.0
+  - lonelinesstotal: mean=45.72, min=29.0, max=75.0
+
+Categorical top 5 values (first 3 columns):
+  - gender: {'Female': 425, 'Male': 230}
+
+==================================================
+
+--- nhanes_joined_mood_sleep.csv ---
+Rows: 4061
+Columns: 17
+Column names: SEQN, DPQ010, DPQ020, DPQ030, DPQ040, DPQ050, DPQ060, DPQ070, DPQ080, DPQ090, DPQ100, SLQ300, SLQ310, SLD012, SLQ320, SLQ330, SLD013
+Data types: {'SEQN': 'float64', 'DPQ010': 'float64', 'DPQ020': 'float64', 'DPQ030': 'float64', 'DPQ040': 'float64', 'DPQ050': 'float64', 'DPQ060': 'float64', 'DPQ070': 'float64', 'DPQ080': 'float64', 'DPQ090': 'float64', 'DPQ100': 'float64', 'SLQ300': 'object', 'SLQ310': 'object', 'SLD012': 'float64', 'SLQ320': 'object', 'SLQ330': 'object', 'SLD013': 'float64'}
+
+Top 5 columns by missing %:
+  (No missing values)
+
+Numeric stats (first 5 numeric columns):
+  - SEQN: mean=136358.81, min=130379.0, max=142310.0
+  - DPQ010: mean=0.65, min=0.0, max=9.0
+  - DPQ020: mean=0.62, min=0.0, max=9.0
+  - DPQ030: mean=1.02, min=0.0, max=9.0
+  - DPQ040: mean=1.13, min=0.0, max=9.0
+
+Categorical top 5 values (first 3 columns):
+  - SLQ300: {'23:00': 778, '22:00': 769, '00:00': 537, '22:30': 347, '21:00': 301}
+  - SLQ310: {'06:00': 664, '07:00': 598, '05:00': 381, '08:00': 381, '06:30': 376}
+  - SLQ320: {'23:00': 792, '00:00': 722, '22:00': 601, '01:00': 393, '02:00': 275}
+
+==================================================
+
+--- ocd_symptoms_clean.csv ---
+Rows: 8304
+Columns: 10
+Column names: Disease, unwanted_thoughts, repetitve_behaviors, overthinking, mind_going_blank, avoidance_of_social_activity, panic, hypervigilance, sleep_disturbances, low_energy
+Data types: {'Disease': 'object', 'unwanted_thoughts': 'int64', 'repetitve_behaviors': 'int64', 'overthinking': 'int64', 'mind_going_blank': 'int64', 'avoidance_of_social_activity': 'int64', 'panic': 'int64', 'hypervigilance': 'int64', 'sleep_disturbances': 'int64', 'low_energy': 'int64'}
+
+Top 5 columns by missing %:
+  (No missing values)
+
+Numeric stats (first 5 numeric columns):
+  - unwanted_thoughts: mean=0.04, min=0.0, max=1.0
+  - repetitve_behaviors: mean=0.04, min=0.0, max=1.0
+  - overthinking: mean=0.04, min=0.0, max=1.0
+  - mind_going_blank: mean=0.04, min=0.0, max=1.0
+  - avoidance_of_social_activity: mean=0.04, min=0.0, max=1.0
+
+Categorical top 5 values (first 3 columns):
+  - Disease: {'Major Depressive Disorder': 392, 'Dissociative Amnesia': 391, 'Separation Anxiety Disorder': 390, 'Obsessive-Compulsive Disorder (OCD)': 390, 'ADHD (Attention Deficit Hyperactivity Disorder)': 390}
+
+==================================================
+
+--- rosenberg_self_esteem_clean.csv ---
+Rows: 43698
+Columns: 12
+Column names: gender, age, Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10
+Data types: {'gender': 'int64', 'age': 'int64', 'Q1': 'int64', 'Q2': 'int64', 'Q3': 'int64', 'Q4': 'int64', 'Q5': 'int64', 'Q6': 'int64', 'Q7': 'int64', 'Q8': 'int64', 'Q9': 'int64', 'Q10': 'int64'}
+
+Top 5 columns by missing %:
+  (No missing values)
+
+Numeric stats (first 5 numeric columns):
+  - gender: mean=1.63, min=0.0, max=3.0
+  - age: mean=27.50, min=0.0, max=90210.0
+  - Q1: mean=2.99, min=0.0, max=4.0
+  - Q2: mean=3.07, min=0.0, max=4.0
+  - Q3: mean=2.32, min=0.0, max=4.0
+
+No categorical columns.
+
+==================================================
+
+--- tech_burnout_2026_clean.csv ---
+Rows: 62662
+Columns: 12
+Column names: age, gender, work_hours_per_week, meetings_per_day, work_life_balance_score, job_satisfaction_score, social_support_score, deadline_pressure_score, autonomy_score, stress_score, burnout_score, burnout_level
+Data types: {'age': 'int64', 'gender': 'object', 'work_hours_per_week': 'int64', 'meetings_per_day': 'float64', 'work_life_balance_score': 'float64', 'job_satisfaction_score': 'float64', 'social_support_score': 'float64', 'deadline_pressure_score': 'float64', 'autonomy_score': 'float64', 'stress_score': 'float64', 'burnout_score': 'float64', 'burnout_level': 'object'}
+
+Top 5 columns by missing %:
+  (No missing values)
+
+Numeric stats (first 5 numeric columns):
+  - age: mean=28.39, min=22.0, max=55.0
+  - work_hours_per_week: mean=47.10, min=35.0, max=72.0
+  - meetings_per_day: mean=4.15, min=0.0, max=12.0
+  - work_life_balance_score: mean=5.42, min=1.0, max=10.0
+  - job_satisfaction_score: mean=4.83, min=1.0, max=10.0
+
+Categorical top 5 values (first 3 columns):
+  - gender: {'Male': 40926, 'Female': 18565, 'Non-binary': 2517, 'Prefer not to say': 654}
+  - burnout_level: {'Severe': 17974, 'Moderate': 16364, 'Low': 16234, 'High': 12090}
+
+==================================================
+
