@@ -1,151 +1,227 @@
-# MINDSIGHT Clinical Assessment System (v3.9)
+# MINDSIGHT
 
-MINDSIGHT is a production-grade, unified multi-domain diagnostic evaluation framework. The system processes high-dimensional psychological, physiological, occupational, and behavioral payload data across 6 independent diagnostic vectors, running deterministic metrics alongside advanced machine learning ensembles (XGBoost, LightGBM, RandomForest, and LogisticRegression + IsolationForest). It culminates in a synthesized, cross-domain global overview profile designed for clinical decision-making support.
+**Unified Multi-Domain Psychological Diagnostic Profiling System**
+*System Architecture Version 3.8 · Schema Version 2.6*
 
----
-
-## 1. Datasets & Feature Specifications
-
-The framework ingests raw observation vectors matching a structured schema (e.g., `responses.csv`). The inputs are classified into five primary feature blocks:
-
-### A. Personality Vector Inputs (Big Five / IRT)
-* **Features:** 15 item-level sub-features (`EXT1-3`, `EST1-3`, `AGR1-3`, `CSN1-3`, `OPN1-3`).
-* **Scale:** Numeric values centered around a neutral baseline anchor point of `2.0`.
-* **Application:** Captured to evaluate continuous trait deviations across Extraversion, Emotional Stability, Agreeableness, Conscientiousness, and Openness.
-
-### B. Self-Esteem Scale (Modified RSE)
-* **Features:** 10 diagnostic survey indicators (`Q1` through `Q10`).
-* **Scale:** Explicit `0` to `4` integer ranges, establishing a mathematical ceiling of `40`.
-* **Polarity:** 
-  * *Positive Valence Items:* `Q1, Q2, Q4, Q6, Q7` (Direct accumulation).
-  * *Inverted Vulnerability Items:* `Q3, Q5, Q8, Q9, Q10` (Inverted via $4.0 - \text{value}$).
-
-### C. Mood & Circadian Metrics (PHQ-9 + Clock Diagnostics)
-* **Features:** 
-  * 9 clinical psychometric values (`DPQ010` through `DPQ090` inclusive of suicidal ideation indices).
-  * 2 string clock tokens (`SLQ300`: Bedtime, `SLQ310`: Wake time) formatted as `HH:MM`.
-* **Scale:** PHQ items score from `0` to `3`. Sleep times span a standard 24-hour cyclical clock space.
-
-### D. Digital Engagement & Social Connectivity Spans
-* **Features:** 10 Internet Addiction Test metrics (`IAT1-10`) combined with 6 standardized social indicators (`loneliness1-6`).
-* **Scale:** Ordinal integer weights tracking compulsive online engagement and perceived relationship depths.
-
-### E. Occupational Load & Severe Symptomatic Markers
-* **Administrative Features:** `work_hours_per_week`, `meetings_per_day`, `work_life_balance_score`, `job_satisfaction_score`, `deadline_pressure_score`, `autonomy_score`, `stress_score`, `social_support_score`.
-* **Binary Severe Markers:** 7 clinical flags tracking `unwanted_thoughts`, `repetitve_behaviors`, `overthinking`, `mind_going_blank`, `avoidance_of_social_activity`, `panic`, and `hypervigilance`.
+MINDSIGHT takes a single 70-item questionnaire response and produces a six-domain psychological profile — personality, self-esteem, mood & sleep, digital/social behavior, occupational burnout, and clinical (OCD-spectrum) screening — culminating in a synthesized global profile and a generated PDF report.
 
 ---
 
-## 2. Domain-Specific Model Architectures
+## Table of Contents
 
-+----------------------------------------------------------------------------------------------------+
-|                                    RAW CSV INPUT PAYLOAD ROW                                       |
-+----------------------------------------------------------------------------------------------------+
-│
-+------------------+-----------------------+------------------+-----------------------+
-│                  │                       │                  │                       │
-▼                  ▼                       ▼                  ▼                       ▼
-+--------------+   +--------------+        +--------------+   +--------------+        +--------------+
-|   DOMAIN 1   |   |   DOMAIN 2   |        |   DOMAIN 3   |   |   DOMAIN 4   |        |   DOMAIN 5   |
-| Personality  |   | Self-Esteem  |        | Mood & Sleep |   | Digital/Soc. |        |   Burnout    |
-| Mean Dev.    |   | 0-4 Max 40   |        | InclusiveSum |   | RandomForest |        | XGB/LightGBM |
-| Vector Lat.  |   | Inv-Mapping  |        | Wraparound   |   | DataFrames   |        | SHAP Sign-Tr |
-+--------------+   +--------------+        +--------------+   +--------------+        +--------------+
-│                  │                       │                  │                       │
-+------------------+-----------------------+------------------+-----------------------+
-│
-▼
-+--------------------+
-|      DOMAIN 6      |
-| Severe Clinical LR |
-|  + IsolationForest |
-+--------------------+
-│
-▼
-+--------------------+
-|  PROFILE SYNTHESIS |
-| Tiered Cross-Match |
-|   Summary Output   |
-+--------------------+
-
-### Domain 1: Personality Vectors
-* **Type:** Likelihood Deviation Vector Model.
-* **Architecture:** Avoids top-level aggregation leakage by calculating the arithmetic mean of item clusters relative to the midpoint. Continuous item attribution tracking maps local feature importance via absolute variance:
-  $$\text{Deviation} = |X_i - 2.0|$$
-  Surfaces individual sub-items as structural drivers rather than circular trait summaries.
-
-### Domain 2: Self-Esteem Matrix
-* **Type:** Calibrated Psychometric Scale scoring.
-* **Architecture:** Evaluates total configuration profiles across a maximum scale value of 40 points. Implements strict reverse-scoring algorithms for negative valence questions:
-  $$f(x) = 4.0 - x$$
-  Categorizes final placements into High Self-Esteem ($\ge 30$), Normal ($\ge 16$), and Low Self-Esteem ($< 16$) bands.
-
-### Domain 3: Mood & Sleep Dynamics
-* **Type:** Summatic Clinical Index + Cyclical Clock Modulo Framework.
-* **Architecture:** Integrates all 9 categorical tracks of the PHQ-9 instrument to evaluate overall severity. Sleep processing mitigates overnight timeline wraparound traps using a safe modulo 24-hour transform:
-  $$\text{Duration} = (\text{Wake Time} - \text{Bed Time}) \pmod{24.0}$$
-
-### Domain 4: Digital & Social Dynamics
-* **Type:** Dual Ensemble Random Forest Regressors (RandomForestRegressor).
-* **Architecture:** Processes structural data arrays using a matched inference dataframe pipeline to execute independent predictions for `addiction_model` and `loneliness_model`. Contains dynamic fallback scaling thresholds if file state paths are absent.
-
-### Domain 5: Occupational Burnout Index
-* **Type:** Gradient Boosted Decision Tree Ensembles (XGBRegressor / LGBMRegressor).
-* **Architecture:** Extracts structural target indicators based on institutional loading. Local feature attribution runs through a structural SHAP array that isolates driver values while strictly preserving raw signs ($+$ or $-$), ensuring protective variables (e.g., high autonomy or high social support) are correctly represented as negative pressure vectors instead of risk additions.
-
-### Domain 6: Severe Clinical Screening Matrix
-* **Type:** Log-Odds Classifier (LogisticRegression) + Unsupervised Anomaly Detector (IsolationForest).
-* **Architecture:** Evaluates clinical presentations while checking response configuration validity. To bypass sigmoid saturation drops ($+0.0$), it performs feature attribution in raw linear log-odds space ($\text{coefficient} \times \text{value}$). The runtime engine actively skips inactive entries (`value == 0`), preventing zero-contribution items from leaking into the top diagnostic driver slots.
+1. [Datasets](#1-datasets)
+2. [Domain Model Architectures](#2-domain-model-architectures)
+3. [Key Files & Their Roles](#3-key-files--their-roles)
+4. [General Workflow](#4-general-workflow-most-important)
+5. [Project Structure](#5-project-structure)
 
 ---
 
-## 3. Core Base Architecture & File Mappings
+## 1. Datasets
 
-### `models/inference_wrappers.py`
-The primary operational gateway for individual model scoring. It manages state files, maps raw data matrices into safe numerical configurations, and establishes data integrity contracts across the six domains.
-* `evaluate_domain1_personality(raw_payload)`: Extracts 15 sub-items, maps trait variations, and ranks top item-level variances.
-* `evaluate_domain2_self_esteem(raw_payload)`: Implements 0-4 polarity inversions, scores items out of 40, and determines categorical classifications.
-* `evaluate_domain3_mood_sleep(raw_payload)`: Explicitly sums the full 9-item PHQ matrix and runs cyclical 24-hour sleep duration transformations.
-* `evaluate_domain4_multitask(raw_payload)`: Maps behavioral features into input dataframes to drive random forest predictions.
-* `evaluate_domain5_burnout(raw_payload)`: Tracks workplace loading via decision trees and handles SHAP vector sign assignments.
-* `evaluate_domain6_clinical(raw_payload)`: Runs logistic classifications alongside anomaly detections, utilizing active feature filtering in log-odds spaces.
+All datasets live in `datasets/`. Each domain is trained on exactly one source dataset, and the **authoritative feature list per domain is defined in `schema_config.json` (schema v2.6, 70 total features)** — that file, not this README, is the source of truth if the two ever disagree.
 
-### `profile_aggregator.py`
-The orchestration component that manages multi-domain handoffs and runs cross-domain global profile evaluations.
-* `aggregate_assessment_profile(raw_csv_row_dict)`: Ingests flat dictionary rows, executes the `inference_wrappers` pipeline sequentially, and forwards compiled metrics to the narrative builder.
-* `evaluate_cross_domain_synthesis(domain_outputs)`: Reads computed pipeline outputs defensively to build an objective, structured summary paragraph based on an unified clinical severity matrix.
+| Dataset file | Used by | Feature columns used |
+|---|---|---|
+| `big_five_personality_clean.csv` | Domain 1 — Personality | `EXT1–EXT3`, `EST1–EST3`, `AGR1–AGR3`, `CSN1–CSN3`, `OPN1–OPN3` (3 items per trait, 15 total) |
+| `rosenberg_self_esteem_clean.csv` | Domain 2 — Self-Esteem | `age`, `gender`, `Q1–Q10` (10 RSE items) |
+| `nhanes_joined_mood_sleep.csv` | Domain 3 — Mood & Sleep | `DPQ010–DPQ100` (10 PHQ-9 items), `SLQ300` (bedtime), `SLQ310` (wake time) |
+| `internet_phq_loneliness_clean.csv` | Domain 4 — Digital & Social | `age`, `gender`, `IAT1–IAT10` (Internet Addiction Test), `loneliness1–loneliness6` |
+| `tech_burnout_2026_clean.csv` | Domain 5 — Occupational Burnout | `age`, `gender`, `work_hours_per_week`, `meetings_per_day`, `work_life_balance_score`, `job_satisfaction_score`, `deadline_pressure_score`, `autonomy_score`, `stress_score`, `social_support_score` |
+| `ocd_symptoms_clean.csv` | Domain 6 — Severe Clinical Screening | `unwanted_thoughts`, `repetitve_behaviors`, `overthinking`, `mind_going_blank`, `avoidance_of_social_activity`, `panic`, `hypervigilance` (7 binary symptom flags) |
+
+Supporting files in `datasets/`:
+- `datasets_metadata.json` / `datasets_metadata.txt` — column ranges, types, and provenance notes for every dataset above (read via `scripts/read_metadata.py`).
+
+> **Note:** `nhanes_joined_mood_sleep.csv` is the pre-joined output of `scripts/archive/merge_nhanes_mood_sleep.py`, which joined NHANES mood (DPQ) and sleep (SLQ) tables on `SEQN`. The merge script is archived because the join is a one-time data-prep step, not part of the live pipeline.
 
 ---
 
-## 4. General Functional Workflow
+## 2. Domain Model Architectures
 
-The MINDSIGHT engine executes operations via a strict, single-pass pipeline architecture:
+Each domain has its own training script (`models/train_domain*_*.py`) and produces artifacts saved into `models/saved_states/`. Architectures differ deliberately by domain — chosen to match the statistical nature of each instrument rather than using one model for everything.
 
-[ Ingest Row Payload ]
-│
-▼
-[ Parallel Parsing & Validation ] ──► (Verify Clock Strings & Type Conversions)
-│
-▼
-[ Multi-Domain Evaluation Loop ]  ──► (Execute 6 Core Domain Wrappers)
-│
-▼
-[ Metric Verification Engine ]    ──► (Check PHQ-9 Items, 40-Scale Inversions, SHAP Signs)
-│
-▼
-[ Cross-Domain Synthesis ]        ──► (Apply Tiered Narrative Decision Matrix)
-│
-▼
-[ Consolidated JSON Serialization ] ──► (Output Unified Struct for PDF Generation Layer)
+### Domain 1 — Personality (Big Five)
+- **Architecture:** Graded Response Model (GRM), Item Response Theory (IRT)
+- **Why:** Big Five items are ordinal Likert responses; GRM-IRT models each item's discrimination and threshold parameters per trait, producing a latent trait score (θ) that's more psychometrically valid than a raw item average.
+- **One model fit per trait** (5 total: EXT, EST, AGR, CSN, OPN), each on its 3 items.
+- **Artifacts:** `domain1_grm_parameters.pkl` (fitted item discrimination/threshold parameters per trait), `domain1_grm_metadata.json`.
+- **Output:** θ (theta) placement per trait, plus per-item contribution to that trait's score.
 
+### Domain 2 — Self-Esteem (Rosenberg Scale)
+- **Architecture:** Deterministic scoring formula + empirical percentile lookup table (no ML model).
+- **Why:** RSE is a validated clinical instrument with a fixed, well-known scoring procedure (reverse-coding negative items, summing to a 0–30 range); there's nothing to "learn" — the value is in correctly computing the standard score and placing it against a normative percentile distribution.
+- **Cohort percentiles:** built from `rosenberg_self_esteem_clean.csv`, bucketed by age band and gender; `age` is filtered to a plausible [10, 90] range before building cohort tables to avoid data-entry outliers skewing percentiles.
+- **Artifacts:** `domain2_self_esteem.pkl` (scoring/lookup logic), `domain2_self_esteem_percentiles.json` (the percentile table), `domain2_self_esteem_metadata.json`.
+- **Output:** RSE total score (out of 30), percentile placement label (e.g. "Normal"), and per-item signed contributions.
 
-1. **Ingestion & Structuring:** A raw data dictionary is generated from an incoming row source (such as automated CSV parsers) and fed into `aggregate_assessment_profile`.
-2. **Payload Extraction:** Demographic identifiers (`age`, `gender`) are isolated, while sub-feature arrays are systematically routed to their respective domain evaluation wrappers.
-3. **Isolated Inference Execution:**
-   * Continuous data values are centered against baseline metrics.
-   * Psychometric questionnaire scales execute inversion logic on negative tracking vectors.
-   * Time-series string patterns are transformed into fractional hours via modulo calculations.
-   * Ensemble models receive appropriately structured matrices to generate predictive targets.
-4. **Local Feature Attribution:** Every individual wrapper extracts local explanation vectors (SHAP arrays, linear coefficients, or baseline deviations), discards inactive features, preserves sign orientation, and sorts the elements to output the top 3 high-impact contributors.
-5. **State-Level Synthesis Integration:** The compiled metrics from all 6 vectors are delivered to `evaluate_cross_domain_synthesis`. This component applies a tiered clinical severity matrix to generate an integrated global summary narrative without recomputing base variables.
-6. **Contract-Aligned Output Delivery:** The system serializes the complete structural payload (including versioning, metadata, domain parameters, and the synthesized overview text) into a unified object, ready for ingestion by downstream reporting engines and PDF template builders.
+### Domain 3 — Mood & Sleep (PHQ-9 + Sleep Duration)
+- **Architecture:** LightGBM (gradient-boosted trees) on engineered features, alongside a deterministic PHQ-9 sum and sleep-duration calculation.
+- **Why:** PHQ-9 itself has a standard deterministic sum (`DPQ010`–`DPQ100`); LightGBM is used for any secondary modeling once the deterministic mood and sleep features are engineered correctly.
+- **Preprocessing requirements (critical):**
+  - DPQ rows with refusal/"don't know" codes (`7`, `9`) must be filtered/excluded before summation.
+  - `SLQ300` (bedtime) and `SLQ310` (wake time) are parsed as `HH:MM` and converted to sleep duration using **mod-24 wraparound** (since bedtime is typically late-night and wake time is the next morning).
+- **Artifacts:** `domain3_mood_sleep.txt` (LightGBM model dump), `domain3_mood_sleep_metadata.json`.
+- **Output:** PHQ-9 sum + severity band (e.g. "Moderate Depression"), calculated sleep duration in hours.
+
+### Domain 4 — Digital & Social Dynamics (Internet Addiction + Loneliness)
+- **Architecture:** Two independent `RandomForestRegressor` models — one predicting total Internet Addiction score, one predicting total loneliness score.
+- **Why:** These are two related but distinct constructs (digital dependency vs. social isolation) measured by separate item sets (`IAT1–10` vs `loneliness1–6`); modeling them as two independent regressors avoids forcing a shared latent structure that doesn't actually exist in the source instruments.
+- **Artifacts:** `domain4_digital_social.pkl` (both fitted RF models), `domain4_digital_social_metadata.json`.
+- **Output:** Addiction score, Loneliness Index, and top contributing IAT/loneliness items per model (via `.feature_importances_`).
+
+### Domain 5 — Occupational Burnout
+- **Architecture:** XGBoost (gradient-boosted trees).
+- **Why:** Burnout is a composite outcome influenced by multiple interacting workplace factors (hours, deadline pressure, autonomy, support) with likely non-linear relationships and interactions — XGBoost handles this well and supports SHAP-style per-feature attribution for explainability.
+- **Artifacts:** `domain5_burnout.json` (XGBoost model dump), `domain5_burnout_metadata.json`.
+- **Output:** Burnout Index (continuous) + severity band (e.g. "Severe Burnout Indication"), top contributing workplace factors.
+
+### Domain 6 — Severe Clinical Screening (OCD-Spectrum Symptoms)
+- **Architecture:** `LogisticRegression(multi_class='ovr')` (one-vs-rest) for symptom severity classification, plus an `IsolationForest` for atypical/outlier response-pattern detection.
+- **Why:** The 7 features are binary symptom flags; logistic regression gives interpretable per-symptom coefficients, while the Isolation Forest separately flags response patterns that don't fit any typical cluster — surfaced in the report as "ATYPICAL" — which is distinct from symptom severity itself.
+- **Artifacts:** `domain6_clinical.pkl` (both fitted models), `domain6_clinical_metadata.json`.
+- **Output:** Symptom severity classification (e.g. "Mild Symptomatic Profile"), atypicality flag, and per-symptom contribution (`coefficient × feature_value`).
+
+---
+
+## 3. Key Files & Their Roles
+
+### `models/`
+| File | Role |
+|---|---|
+| `feature_mappings.py` | Central lookup of feature names → human-readable display labels (e.g. `stress_score` → "General Perceived Stress Load") used when rendering driver/contributor labels in reports. Domain-specific — each domain must only reference its own feature names here. |
+| `inference_wrappers.py` | Loads each domain's saved artifact from `models/saved_states/` and exposes a uniform `predict(input_row)` interface per domain. Responsible for computing the final placement value and the ranked top-contributors list for every domain. This is the most central file in the live pipeline — nearly all per-domain bugs trace back to logic here rather than to the training scripts. |
+| `train_domain1_personality.py` … `train_domain6_clinical.py` | One script per domain; loads the domain's dataset, fits the architecture described in Section 2, and writes the resulting artifact(s) + metadata JSON into `models/saved_states/`. |
+| `train_orchestrator.py` | Runs all six domain training scripts in sequence, regenerating every artifact in `saved_states/` from the datasets. |
+| `profile_aggregator.py` | Combines all six domains' individual outputs into a single compiled profile (the `compiled_profile_eval_*.json` shape), and produces the synthesized global narrative text. |
+| `pdf_generator.py` | Renders the compiled profile into the final `Mindsight_Report_*.pdf`. |
+| `.schema_hash` | Hash of `schema_config.json`, used to detect when the feature schema has changed and saved models may be stale. |
+
+### `scripts/`
+| File | Role |
+|---|---|
+| `take_assessment.py` | CLI entry point for taking a single assessment — collects/loads responses, runs them through inference, and triggers report generation. |
+| `read_metadata.py` | Reads and prints `datasets_metadata.json`/`.txt` for quick dataset inspection. |
+| `flush_training_data.py` | Clears/resets training artifacts (used before a full retrain). |
+| `flush_reports.py` | Clears out generated `reports/report_*/` run folders. |
+| `check_domains_4_6.py`, `diagonistic_script.py` | Diagnostic utilities for printing raw model internals (e.g. feature importances, regression coefficients) directly against a given input row, to verify a domain's output is using real fitted model values rather than placeholder logic. |
+| `archive/` | One-time, already-completed data-prep scripts (NHANES merge, IMP70 questionnaire generation, dataset trimming) — not part of the live pipeline; kept for provenance. |
+
+### `tests/`
+| File | Role |
+|---|---|
+| `run_assessments.py` | Batch-runs multiple responses through the pipeline (e.g. from `all_responses.csv`) for regression testing. |
+| `responses.csv` / `all_responses.csv` | Sample response rows used for testing and manual verification. |
+
+### Root
+| File | Role |
+|---|---|
+| `main.py` | Top-level entry point for the project. |
+| `schema_config.json` | **Authoritative feature contract** — schema version 2.6, defines exactly which 70 features belong to which domain and which dataset they come from. Any change here requires retraining affected domains. |
+
+---
+
+## 4. General Workflow (MOST IMPORTANT)
+
+This is the end-to-end path data takes through MINDSIGHT, from raw questionnaire response to final PDF report.
+
+```
+ ┌─────────────────────┐
+ │  70-item response    │   (matches schema_config.json feature list,
+ │  (responses.csv /     │    see feature-count note below)
+ │   user input)         │
+ └──────────┬───────────┘
+            │
+            ▼
+ ┌─────────────────────────────┐
+ │  scripts/take_assessment.py  │  Entry point — loads the response row
+ └──────────┬───────────────────┘
+            │
+            ▼
+ ┌─────────────────────────────────────────────┐
+ │       models/inference_wrappers.py            │
+ │  For EACH of the 6 domains:                   │
+ │   1. Select that domain's features            │
+ │      from the response (per schema_config.json)│
+ │   2. Load that domain's saved artifact         │
+ │      from models/saved_states/                 │
+ │   3. Run domain-specific prediction logic       │
+ │      (GRM theta / RSE formula / LightGBM /      │
+ │       RandomForest / XGBoost / LogReg+IForest)  │
+ │   4. Compute placement value + ranked           │
+ │      top-contributors for that domain           │
+ └──────────┬─────────────────────────────────────┘
+            │  (six independent domain outputs)
+            ▼
+ ┌─────────────────────────────────┐
+ │   models/profile_aggregator.py    │
+ │   Combines all 6 domain outputs   │
+ │   into one compiled profile JSON  │
+ │   + writes a synthesized global   │
+ │   narrative paragraph              │
+ └──────────┬─────────────────────────┘
+            │
+            ▼
+ ┌─────────────────────────────────┐
+ │     models/pdf_generator.py        │
+ │   Renders the compiled profile     │
+ │   into the final formatted PDF     │
+ └──────────┬─────────────────────────┘
+            │
+            ▼
+ ┌──────────────────────────────────────────────────────────┐
+ │   reports/report_<timestamp>/                              │
+ │   ├── eval_<timestamp>/                                     │
+ │   │   ├── compiled_profile_eval_<timestamp>.json             │
+ │   │   └── Mindsight_Report_eval_<timestamp>.pdf               │
+ │   └── responses.csv   (the exact input that produced this run)│
+ └──────────────────────────────────────────────────────────┘
+```
+
+**Training workflow (run separately, before any assessment can be taken):**
+
+```
+datasets/*.csv  →  models/train_domain{1..6}_*.py  →  models/saved_states/*.pkl|.json|.txt
+                         (or models/train_orchestrator.py runs all six at once)
+```
+
+Every saved artifact must be regenerated any time:
+- `schema_config.json` changes (check `.schema_hash` for drift), or
+- a domain's training script logic changes, or
+- the underlying dataset is updated.
+
+**Verification workflow (used throughout development to catch silent inference bugs):**
+
+```
+Fixed test response row  →  run through take_assessment.py  →  compare report
+output by hand against the raw input  →  if a domain's placement/drivers don't
+make sense for the given raw values, trace the bug to inference_wrappers.py
+(most common) or the domain's train_domain*.py / saved artifact (less common)
+```
+
+This hand-verification loop was essential during development — several domains (1, 4, 6) went through multiple rounds of fixes where placement values were silently constant, mislabeled with another domain's feature names, or unverified, despite looking superficially plausible in the rendered PDF.
+
+> **Note on feature counts:** each domain only ever sees its own feature subset as defined in `schema_config.json` — domain 1: 15, domain 2: 12, domain 3: 12, domain 4: 18, domain 5: 10, domain 6: 7. That sums to 74 feature *references*, not 70, because `age` and `gender` are each listed independently in three domains (2, 4, and 5). Counting `age` and `gender` once each instead of three times brings the total back down to exactly 70 unique questionnaire items, matching `schema_config.json`'s `total_features: 70`. Always treat `schema_config.json` as the ground truth for exact per-domain feature lists.
+
+---
+
+## 5. Project Structure
+
+```
+MINDSIGHT/
+├── datasets/              Source CSVs for all 6 domains + metadata
+├── docs/                  Architecture reports, IMP70 questionnaire reference
+├── individual_eval/       Standalone per-person evaluation runs
+├── models/                Training scripts, inference logic, saved artifacts
+│   ├── saved_states/      Fitted model artifacts (one set per domain)
+│   └── weights/           (currently unused — reserved for future model weight files)
+├── reports/                Timestamped end-to-end assessment runs (input + compiled profile + PDF)
+├── scripts/                CLI utilities, diagnostics, archived one-time data-prep scripts
+├── tests/                  Sample responses and batch-assessment regression tests
+├── main.py                 Project entry point
+└── schema_config.json      Authoritative 70-feature schema (v2.6) — source of truth for all domain feature lists
+```
+
+---
+
+*For the detailed feature-level data dictionary (column ranges, types, valid codes), see `datasets/datasets_metadata.json` / `.txt`. For the original architecture rationale document, see `docs/mindsight_architecture_report.pdf`.*
