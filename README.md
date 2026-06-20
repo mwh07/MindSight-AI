@@ -1,7 +1,5 @@
 # MindSIGHT
 
-# MINDSIGHT Clinical Assessment System (v3.9)
-
 MINDSIGHT is a production-grade, unified multi-domain diagnostic evaluation framework. The system processes high-dimensional psychological, physiological, occupational, and behavioral payload data across 6 independent diagnostic vectors, running deterministic metrics alongside advanced machine learning ensembles (`XGBoost`, `LightGBM`, `RandomForest`, and `LogisticRegression` + `IsolationForest`). It culminates in a synthesized, cross-domain global overview profile designed for clinical decision-making support.
 
 ---
