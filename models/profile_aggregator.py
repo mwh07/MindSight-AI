@@ -34,8 +34,11 @@ def evaluate_cross_domain_synthesis(domain_outputs):
     # Domain 2
     d2_placement = domain_outputs.get("domain_2_self_esteem", {}).get("placement", {})
     rse_score = float(d2_placement.get("score", 15.0))
-    # Standard normalization mapping back to arbitrary cohort percentage if needed for logic constraints
-    rse_pct = (rse_score / 30.0) * 100.0
+    # Read the REAL max score that domain 2 actually used (40, per its own placement
+    # output) rather than hardcoding 30 -- the two values give materially different
+    # percentiles and previously shifted every percentile-based threshold below.
+    rse_max = float(d2_placement.get("max_possible_score", 40.0))
+    rse_pct = (rse_score / rse_max) * 100.0 if rse_max > 0 else 0.0
     
     # Domain 3 (Flexible Route Catching)
     d3_key = "domain_3_mood_sleep" if "domain_3_mood_sleep" in domain_outputs else "domain_3_mood_and_sleep"
@@ -43,8 +46,10 @@ def evaluate_cross_domain_synthesis(domain_outputs):
     mood_class = str(d3_placement.get("severity_label", d3_placement.get("assigned_severity_class", "Minimal")))
     phq_sum = int(d3_placement.get("phq9_sum", d3_placement.get("deterministic_phq9_sum", 0)))
     
-    # Domain 4 (Flexible Route Catching)
-    d4_key = "domain_4_multitask" if "domain_4_multitask" in domain_outputs else "domain_4_digital_and_social"
+    # Domain 4 -- outer key is now consistently "domain_4_digital_and_social"
+    # (see generate_full_profile). The "domain_4_multitask" fallback is kept only
+    # for backward compatibility with any stale cached payloads from before this fix.
+    d4_key = "domain_4_digital_and_social" if "domain_4_digital_and_social" in domain_outputs else "domain_4_multitask"
     d4_placement = domain_outputs.get(d4_key, {}).get("placement", {})
     lone_score = float(d4_placement.get("loneliness_score", d4_placement.get("predicted_total_loneliness", 30.0)))
     
@@ -60,12 +65,17 @@ def evaluate_cross_domain_synthesis(domain_outputs):
     # Real-time extraction of live clinical label to block semantic logic drift
     friendly_condition = d6_placement.get("predicted_condition_label", None)
     if not friendly_condition:
+        # This fallback map must mirror CLINICAL_SEVERITY_MAP in inference_wrappers.py
+        # exactly. It previously used a completely different, fabricated set of labels
+        # (e.g. "Generalized Anxiety Phenotype") that domain 6's actual model never
+        # produces -- if this path were ever reached (such as when the domain 6 model
+        # files are missing and the early-return stub omits predicted_condition_label),
+        # it would have silently displayed a clinically incorrect diagnosis label.
         CONDITION_MAP = {
             "0": "Baseline Healthy Profile",
-            "1": "Generalized Anxiety Phenotype",
-            "2": "Major Depressive Phenotype",
-            "3": "Adjustment Distress Variant",
-            "4": "Atypical Dysregulation Profile"
+            "1": "Mild Symptomatic Profile",
+            "2": "Moderate Distress Phenotype",
+            "3": "Severe Clinical Screening Indication"
         }
         cond_key = clinical_cond.split('.')[0] if '.' in clinical_cond else clinical_cond
         friendly_condition = CONDITION_MAP.get(cond_key, "Evaluation Pending Profile")
@@ -154,6 +164,14 @@ def generate_full_profile(user_responses):
     # Defensive copy to avoid leaking or mutating state references upstream
     normalized_inputs = dict(user_responses)
 
+    # NOTE: the two translation blocks below are retained for defensive compatibility
+    # but are confirmed no-ops against the real schema_config.json input format.
+    # evaluate_domain3_mood_sleep() now reads DPQ010-DPQ090 directly (see
+    # inference_wrappers.py), so it no longer needs PHQ1-PHQ9 aliases.
+    # evaluate_domain2_self_esteem() already checks Q{i} before falling back to
+    # RSE{i}, so it never needs the RSE{i} aliases either. Both blocks are safe to
+    # remove once confirmed no other caller depends on the aliased keys.
+
     # Fix 1: Map Domain 3 NHANES Database Codes (DPQ010-DPQ090) to standard Model-ready PHQ tokens
     dpq_to_phq_map = {
         "DPQ010": "PHQ1", "DPQ020": "PHQ2", "DPQ030": "PHQ3",
@@ -171,12 +189,18 @@ def generate_full_profile(user_responses):
         if raw_q_key in normalized_inputs and target_rse_key not in normalized_inputs:
             normalized_inputs[target_rse_key] = normalized_inputs[raw_q_key]
 
-    # Explicit mapping execution block ensuring exact v3.9 inference function linkages
+    # Explicit mapping execution block ensuring exact v3.9 inference function linkages.
+    # NOTE: outer key renamed from "domain_4_multitask" to "domain_4_digital_and_social"
+    # to match schema_config.json and the inner "domain" field that
+    # evaluate_domain4_multitask() already returns -- the previous mismatch (outer key
+    # said "multitask", inner field said "digital_and_social") forced every downstream
+    # consumer to guess which name to look up, and was the root cause of the flexible
+    # d4_key fallback below.
     final_domain_outputs = {
         "domain_1_personality": evaluate_domain1_personality(normalized_inputs),
         "domain_2_self_esteem": evaluate_domain2_self_esteem(normalized_inputs),
         "domain_3_mood_sleep": evaluate_domain3_mood_sleep(normalized_inputs),
-        "domain_4_multitask": evaluate_domain4_multitask(normalized_inputs),
+        "domain_4_digital_and_social": evaluate_domain4_multitask(normalized_inputs),
         "domain_5_occupational_burnout": evaluate_domain5_burnout(normalized_inputs),
         "domain_6_severe_clinical": evaluate_domain6_clinical(normalized_inputs)
     }

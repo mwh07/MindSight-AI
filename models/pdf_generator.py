@@ -196,12 +196,17 @@ def compile_pdf_report(profile_data, target_pdf_path):
                 scale_pct = 50.0
             
         elif d_key == "domain_2_self_esteem":
-            # FIX: Realigned to read strict contract signatures from runtime scoring
+            # FIX: Realigned to read strict contract signatures from runtime scoring.
+            # Reads the REAL max_possible_score from the placement dict (40, per
+            # evaluate_domain2_self_esteem) instead of hardcoding /30 -- the hardcoded
+            # value previously mismatched the actual scoring scale on both the displayed
+            # text and the visual scale bar percentage.
             score = placement.get('score', placement.get('raw_score', 0))
+            max_score = placement.get('max_possible_score', 40)
             classification = placement.get('classification', 'Normal Profile')
-            placement_summary = f"RSE Score: {score}/30 ({classification})"
+            placement_summary = f"RSE Score: {score}/{max_score} ({classification})"
             try:
-                scale_pct = (float(score) / 30.0) * 100.0
+                scale_pct = (float(score) / float(max_score)) * 100.0 if float(max_score) > 0 else 50.0
             except (ValueError, TypeError):
                 scale_pct = 50.0
             if scale_pct <= 45.0 or "Low" in classification: 
