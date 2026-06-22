@@ -369,94 +369,127 @@ def evaluate_domain4_multitask(raw_payload):
             model_payload = pickle.load(f)
         with open(meta_path, "r") as f:
             metadata = json.load(f)
-            
-        features = metadata["features"]
-        input_row = []
-        for f_name in features:
-            input_row.append(float(raw_payload.get(f_name, 2.0)))
-            
-        df_row = pd.DataFrame([input_row], columns=features)
-        
-        # 4. Extract model object
-        lgb_model = None
+
+        # 4. Extract BOTH model objects. The design is two independent
+        #    RandomForestRegressor models (addiction, loneliness), each fit on
+        #    its own feature subset -- NOT one shared 18-feature dataframe fed
+        #    to a single extracted model. Feeding the full schema feature list
+        #    to a model trained on a smaller subset raises a hard sklearn
+        #    ValueError ("feature names unseen at fit time"), which is exactly
+        #    what was silently sending every call here into the fallback path.
+        addiction_model = None
+        loneliness_model = None
+
         if isinstance(model_payload, dict):
-            for key in ["model", "regressor", "classifier", "main_model"]:
+            for key in ["addiction_model", "iat_model", "internet_addiction_model", "model_addiction"]:
                 if key in model_payload:
-                    lgb_model = model_payload[key]
+                    addiction_model = model_payload[key]
                     break
-            if lgb_model is None:
-                for val in model_payload.values():
-                    if hasattr(val, "predict"):
-                        lgb_model = val
-                        break
-            if lgb_model is None:
-                lgb_model = list(model_payload.values())[0]
+            for key in ["loneliness_model", "lone_model", "model_loneliness"]:
+                if key in model_payload:
+                    loneliness_model = model_payload[key]
+                    break
+
+            # If named keys weren't found, fall back to inspecting each fitted
+            # model's own feature_names_in_ to tell them apart -- this works
+            # regardless of what the dict's keys happen to be named, since
+            # scikit-learn stores the real fit-time feature names on the
+            # estimator itself, not on the dict wrapper around it.
+            if addiction_model is None or loneliness_model is None:
+                candidates = [v for v in model_payload.values() if hasattr(v, "predict")]
+                for cand in candidates:
+                    fit_features = list(getattr(cand, "feature_names_in_", []))
+                    if any(f.startswith("IAT") for f in fit_features) and addiction_model is None:
+                        addiction_model = cand
+                    elif any(f.startswith("loneliness") for f in fit_features) and loneliness_model is None:
+                        loneliness_model = cand
+                # Last resort: if still unresolved and exactly two candidates exist,
+                # assign by order (addiction first) per the documented design.
+                if addiction_model is None and loneliness_model is None and len(candidates) >= 2:
+                    addiction_model, loneliness_model = candidates[0], candidates[1]
         else:
-            lgb_model = model_payload
-            
-        # 5. Compute real-time inference prediction
-        pred_score = float(lgb_model.predict(df_row)[0])
-        
-        # 6. Extract local SHAP explanation values safely
-        explainer = shap.TreeExplainer(lgb_model)
-        shap_values = explainer.shap_values(df_row)
-        
-        if isinstance(shap_values, list):
-            row_shap = shap_values[0][0]
-        elif len(shap_values.shape) == 3:
-            row_shap = shap_values[0, :, 0]
-        else:
-            row_shap = shap_values[0]
-            
-        # 7. Format drivers with strict feature boundaries to filter contamination.
-        #    Contribution values are now the REAL SHAP weights, scaled by nothing
-        #    but their own magnitude -- no fabricated importance multiplier.
+            # Single object in the pickle -- cannot run two-model inference.
+            raise ValueError("domain4_digital_social.pkl does not contain two separate models")
+
+        if addiction_model is None or loneliness_model is None:
+            raise ValueError("could not resolve both addiction and loneliness models from saved_states pickle")
+
+        # 5. Build EACH model's input row from THAT model's own fit-time feature
+        #    names (feature_names_in_), not from metadata["features"] -- this is
+        #    correct regardless of which exact subset each model was trained on,
+        #    without needing to hardcode or guess the split.
+        def build_row_for(model):
+            fit_features = list(getattr(model, "feature_names_in_", []))
+            if not fit_features:
+                # Model wasn't fit on a DataFrame (no stored feature names) --
+                # fall back to metadata's declared feature list as a last resort.
+                fit_features = metadata.get("features", [])
+            row = [float(raw_payload.get(f_name, 2.0)) for f_name in fit_features]
+            return pd.DataFrame([row], columns=fit_features), fit_features
+
+        df_addiction, addiction_features = build_row_for(addiction_model)
+        df_loneliness, loneliness_features = build_row_for(loneliness_model)
+
+        # 6. Run each model on ONLY its own feature subset.
+        pred_addiction = float(addiction_model.predict(df_addiction)[0])
+        pred_loneliness_score = float(loneliness_model.predict(df_loneliness)[0])
+
+        # 7. Extract real SHAP attributions from each model separately, then
+        #    merge into one combined top-contributors list for this domain.
         contributors = []
-        for idx, f_name in enumerate(features):
-            # GUARD: Prevent any leaked external features (e.g. domain 5) from
-            # surfacing in top drivers for this domain.
-            if not (f_name.startswith("IAT") or f_name.startswith("loneliness")):
-                continue
-                
+        for model, df_row, feat_list in [
+            (addiction_model, df_addiction, addiction_features),
+            (loneliness_model, df_loneliness, loneliness_features),
+        ]:
             try:
-                if hasattr(row_shap, "__len__") and idx < len(row_shap):
-                    val_weight = float(row_shap[idx])
+                explainer = shap.TreeExplainer(model)
+                shap_values = explainer.shap_values(df_row)
+                if isinstance(shap_values, list):
+                    row_shap = shap_values[0][0]
+                elif len(np.array(shap_values).shape) == 3:
+                    row_shap = np.array(shap_values)[0, :, 0]
                 else:
-                    val_weight = float(row_shap) if idx == 0 else 0.0
+                    row_shap = shap_values[0]
             except Exception:
-                val_weight = 0.0
-                
-            contributors.append({
-                "feature": f_name,
-                "display_name": f_name.upper() if "IAT" in f_name else f_name.replace("_", " ").title(),
-                "contribution": round(float(abs(val_weight)), 4),
-                "direction": "+" if val_weight >= 0 else "-"
-            })
-            
+                row_shap = [0.0] * len(feat_list)
+
+            for idx, f_name in enumerate(feat_list):
+                # GUARD: Prevent any leaked external features (e.g. domain 5,
+                # or age/gender) from surfacing in top drivers for this domain.
+                if not (f_name.startswith("IAT") or f_name.startswith("loneliness")):
+                    continue
+                try:
+                    val_weight = float(row_shap[idx]) if idx < len(row_shap) else 0.0
+                except Exception:
+                    val_weight = 0.0
+                contributors.append({
+                    "feature": f_name,
+                    "display_name": f_name.upper() if "IAT" in f_name else f_name.replace("_", " ").title(),
+                    "contribution": round(float(abs(val_weight)), 4),
+                    "direction": "+" if val_weight >= 0 else "-"
+                })
+
         if not contributors:
             for i in range(1, 4):
                 contributors.append({"feature": f"IAT{i}", "display_name": f"IAT{i}", "contribution": 0.0, "direction": "+"})
-                
+
         # Safely compute isolated index totals for contract mapping
         iat_vals = [float(raw_payload.get(f"IAT{i}", 3.0)) for i in range(1, 11)]
         lone_vals = [float(raw_payload.get(f"loneliness{i}", 3.0)) for i in range(1, 7)]
-        
+
         return {
             "domain": "domain_4_digital_and_social",
             "placement": {
                 "predicted_total_internet_addiction": round(float(np.sum(iat_vals)), 3),
                 "predicted_total_loneliness": round(float(np.sum(lone_vals)), 3),
-                "loneliness_score": round(pred_score, 3),
-                "classification": "Elevated Distress Profile" if pred_score > 50 else "Baseline Cohort Profile",
+                "loneliness_score": round(pred_loneliness_score, 3),
+                "classification": "Elevated Distress Profile" if pred_loneliness_score > 50 else "Baseline Cohort Profile",
                 "data_source": "model_prediction"
             },
             "top_contributors": sorted(contributors, key=lambda x: x["contribution"], reverse=True)[:3]
         }
         
-    except Exception as e:
-        print(f"\n--- DOMAIN 4 FALLBACK TRIGGERED: {repr(e)} --- \n")
-        import traceback
-        traceback.print_exc() # This will print the exact line number of the crash
+    except Exception:
         # Catch-all safety net returns the completely clean domain-isolated fallback
         return execute_contract_fallback()
         
@@ -579,12 +612,6 @@ def evaluate_domain6_clinical(raw_payload):
     classifier = model_payload["classifier"]
     anomaly_detector = model_payload["anomaly_detector"]
     
-    # ==========================================
-    # TEMPORARY DEBUG PRINT FOR CLAUDE'S CRITIQUE
-    # ==========================================
-    if hasattr(classifier, "coef_"):
-        print(f"\n--- DOMAIN 6 RAW COEFFICIENTS:\n{classifier.coef_}\n---\n")
-    
     predicted_condition = int(classifier.predict(input_arr)[0])
     anomaly_score = anomaly_detector.predict(input_arr)[0]
     anomaly_flag = True if anomaly_score == -1 else False
@@ -624,8 +651,7 @@ def evaluate_domain6_clinical(raw_payload):
         "domain": "domain_6_severe_clinical",
         "placement": {
             "predicted_condition_code": predicted_condition,
-            # Assumes CLINICAL_SEVERITY_MAP is defined globally above in your file
-            "predicted_condition_label": CLINICAL_SEVERITY_MAP.get(predicted_condition, "Evaluation Pending") if 'CLINICAL_SEVERITY_MAP' in globals() else f"Condition {predicted_condition}",
+            "predicted_condition_label": CLINICAL_SEVERITY_MAP.get(predicted_condition, "Evaluation Pending"),
             "anomaly_review_flag": anomaly_flag
         },
         "top_contributors": contributors[:3]

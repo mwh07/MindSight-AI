@@ -93,6 +93,56 @@ def create_visual_scale(percentage, width=140, filled_color='#2C5282'):
     return t
 
 
+def create_driver_rows(top_contribs, label_style, width=246, domain_accent_color='#378ADD'):
+    """
+    Renders each top driver as its own row: a label, a signed value, and a
+    proportional mini-bar -- so each driver gets clear individual visual
+    weight, rather than being squeezed into a single comma-separated text
+    line that's easy to skim past. Bar length is relative to the largest
+    contribution in this domain's own top-3, so it reads correctly whether
+    the underlying contribution values are on a 0-1 scale or a 0-10 scale.
+
+    Bar color uses the domain's own accent color (passed in by the caller,
+    consistent with that domain's severity scale bar above it) for every
+    driver in that domain, rather than color-coding by +/- sign. A "+"
+    direction means a feature pushed THAT DOMAIN'S OWN SCORE up, which is a
+    risk signal in domain 3/6 (more symptoms = worse) but is often neutral
+    or positive in domain 1/2 (e.g. higher agreeableness, higher
+    self-satisfaction) -- there is no single sign-to-color rule that is
+    correct across all six structurally different domains, so direction is
+    conveyed only via the +/- symbol shown in the label text, not by color.
+    """
+    if not top_contribs:
+        return [Paragraph("Drivers: None Identified", label_style)]
+
+    max_val = max((abs(float(c.get('contribution', 0.0))) for c in top_contribs), default=1.0)
+    max_val = max_val if max_val > 0 else 1.0
+
+    rows = [Paragraph("<b>Key Drivers</b>", label_style)]
+    for c in top_contribs:
+        feat_name = c.get('feature', 'unknown_feature')
+        friendly_label = FEATURE_TRANSLATION_MAP.get(feat_name, LOCAL_TRANSLATION_FALLBACK.get(feat_name, feat_name))
+        direction = c.get('direction', '+')
+        contrib_val = c.get('contribution', 0.0)
+
+        try:
+            pct = (abs(float(contrib_val)) / max_val) * 100.0
+        except (ValueError, TypeError, ZeroDivisionError):
+            pct = 0.0
+
+        sign_display = '+' if direction == '+' else '\u2212'
+
+        row_label = Paragraph(f"{friendly_label} ({sign_display}{contrib_val})", label_style)
+        row_bar = create_visual_scale(pct, width=width, filled_color=domain_accent_color)
+
+        rows.append(row_label)
+        rows.append(Spacer(1, 1))
+        rows.append(row_bar)
+        rows.append(Spacer(1, 3))
+
+    return rows
+
+
 def compile_pdf_report(profile_data, target_pdf_path):
     """
     Transforms unified profile metadata, demographic descriptors, and visual metrics 
@@ -313,26 +363,17 @@ def compile_pdf_report(profile_data, target_pdf_path):
                 bar_color = '#2F855A'
             
         top_contribs = d_data.get("top_contributors", [])
-        contrib_strings = []
-        for c in top_contribs:
-            feat_name = c.get('feature', 'unknown_feature')
-            friendly_label = FEATURE_TRANSLATION_MAP.get(feat_name, LOCAL_TRANSLATION_FALLBACK.get(feat_name, feat_name))
-            direction = c.get('direction', '')
-            contrib_val = c.get('contribution', 0.0)
-            contrib_strings.append(f"{friendly_label} ({direction}{contrib_val})")
-            
-        drivers_line = "Drivers: " + (", ".join(contrib_strings) if contrib_strings else "None Identified")
+        driver_rows = create_driver_rows(top_contribs, attrib_text, width=246, domain_accent_color=bar_color)
         graphic_scale_flowable = create_visual_scale(scale_pct, width=246, filled_color=bar_color)
-        
+
         cell_elements = [
             Paragraph(display_title, section_heading),
             Spacer(1, 2),
             Paragraph(f"<b>Placement:</b> {placement_summary}", body_text),
             Spacer(1, 2),
             graphic_scale_flowable,
-            Spacer(1, 2),
-            Paragraph(drivers_line, attrib_text),
-            Spacer(1, 1)
+            Spacer(1, 4),
+            *driver_rows,
         ]
         grid_cells.append(cell_elements)
         

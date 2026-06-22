@@ -17,20 +17,21 @@ from models.inference_wrappers import (
     evaluate_domain6_clinical
 )
 
-def evaluate_cross_domain_synthesis(domain_outputs):
+def extract_domain_signals(domain_outputs):
     """
-    Evaluates multi-domain results using a tiered clinical severity matrix 
-    to build an objective, streamlined overall mental health profile paragraph.
-    
-    Returns a single concise summary narrative string.
+    Single shared extraction point for all cross-domain signals. Both
+    evaluate_cross_domain_synthesis() and generate_plain_language_summary()
+    call this, so the two narratives can never disagree about the underlying
+    numbers -- they're reading the exact same parsed values.
     """
-    # -------------------------------------------------------------------------
-    # 1. Feature Extraction & Stratification (Defensive Key Parsing)
-    # -------------------------------------------------------------------------
     # Domain 1
     d1_placement = domain_outputs.get("domain_1_personality", {}).get("placement", {})
     p_est = float(d1_placement.get("emotional_stability", 0.0))
-    
+    p_ext = float(d1_placement.get("extraversion", 0.0))
+    p_agr = float(d1_placement.get("agreeableness", 0.0))
+    p_csn = float(d1_placement.get("conscientiousness", 0.0))
+    p_opn = float(d1_placement.get("openness", 0.0))
+
     # Domain 2
     d2_placement = domain_outputs.get("domain_2_self_esteem", {}).get("placement", {})
     rse_score = float(d2_placement.get("score", 15.0))
@@ -39,24 +40,28 @@ def evaluate_cross_domain_synthesis(domain_outputs):
     # percentiles and previously shifted every percentile-based threshold below.
     rse_max = float(d2_placement.get("max_possible_score", 40.0))
     rse_pct = (rse_score / rse_max) * 100.0 if rse_max > 0 else 0.0
-    
+    rse_classification = str(d2_placement.get("classification", "Normal"))
+
     # Domain 3 (Flexible Route Catching)
     d3_key = "domain_3_mood_sleep" if "domain_3_mood_sleep" in domain_outputs else "domain_3_mood_and_sleep"
     d3_placement = domain_outputs.get(d3_key, {}).get("placement", {})
     mood_class = str(d3_placement.get("severity_label", d3_placement.get("assigned_severity_class", "Minimal")))
     phq_sum = int(d3_placement.get("phq9_sum", d3_placement.get("deterministic_phq9_sum", 0)))
-    
+    sleep_hours = float(d3_placement.get("calculated_sleep_duration_hours", 7.5))
+
     # Domain 4 -- outer key is now consistently "domain_4_digital_and_social"
     # (see generate_full_profile). The "domain_4_multitask" fallback is kept only
     # for backward compatibility with any stale cached payloads from before this fix.
     d4_key = "domain_4_digital_and_social" if "domain_4_digital_and_social" in domain_outputs else "domain_4_multitask"
     d4_placement = domain_outputs.get(d4_key, {}).get("placement", {})
     lone_score = float(d4_placement.get("loneliness_score", d4_placement.get("predicted_total_loneliness", 30.0)))
-    
+    addiction_score = float(d4_placement.get("predicted_total_internet_addiction", 25.0))
+
     # Domain 5
     d5_placement = domain_outputs.get("domain_5_occupational_burnout", {}).get("placement", {})
     burnout_lvl = str(d5_placement.get("burnout_tier_label", d5_placement.get("burnout_level", "Low")))
-    
+    burnout_index = float(d5_placement.get("burnout_index", 0.0))
+
     # Domain 6
     d6_placement = domain_outputs.get("domain_6_severe_clinical", {}).get("placement", {})
     clinical_cond = str(d6_placement.get("predicted_condition_code", d6_placement.get("predicted_condition", "0")))
@@ -85,6 +90,196 @@ def evaluate_cross_domain_synthesis(domain_outputs):
     is_moderate_mood = phq_sum >= 10 or any(x in mood_class for x in ["Moderate", "Severe", "Moderately Severe"])
     is_high_burnout = any(x in burnout_lvl for x in ["High", "Severe"])
     is_elevated_burnout = any(x in burnout_lvl for x in ["Moderate", "High", "Severe"])
+    # Domain 6 is "highly abnormal" when its own severity code/label indicates the
+    # most severe clinical tier, OR when the isolation-forest anomaly flag fires
+    # alongside at least moderate signal elsewhere -- a single anomaly flag in
+    # isolation, with everything else low, is treated as situational, not severe.
+    cond_key_normalized = clinical_cond.split('.')[0] if '.' in clinical_cond else clinical_cond
+    is_severe_clinical = (
+        cond_key_normalized == "3"
+        or "Severe" in friendly_condition
+        or (anomaly_flag and (is_severe_mood or is_high_burnout))
+    )
+
+    return {
+        "p_est": p_est, "p_ext": p_ext, "p_agr": p_agr, "p_csn": p_csn, "p_opn": p_opn,
+        "rse_score": rse_score, "rse_max": rse_max, "rse_pct": rse_pct, "rse_classification": rse_classification,
+        "mood_class": mood_class, "phq_sum": phq_sum, "sleep_hours": sleep_hours,
+        "lone_score": lone_score, "addiction_score": addiction_score,
+        "burnout_lvl": burnout_lvl, "burnout_index": burnout_index,
+        "friendly_condition": friendly_condition, "anomaly_flag": anomaly_flag,
+        "is_severe_mood": is_severe_mood, "is_moderate_mood": is_moderate_mood,
+        "is_high_burnout": is_high_burnout, "is_elevated_burnout": is_elevated_burnout,
+        "is_severe_clinical": is_severe_clinical
+    }
+
+
+def _top_driver_phrase(top_contributors, n=2):
+    """Joins the top N driver display names into a short natural-language phrase,
+    e.g. 'agreeableness and extraversion' -- used to build each domain's one-line
+    domain_summary without repeating the full driver list verbatim."""
+    names = []
+    for c in top_contributors[:n]:
+        label = c.get("display_name") or c.get("feature", "")
+        # Strip common suffixes that read awkwardly mid-sentence
+        for suffix in [" Vector", " Index", " Score"]:
+            if label.endswith(suffix):
+                label = label[: -len(suffix)]
+        names.append(label.strip())
+    if not names:
+        return None
+    if len(names) == 1:
+        return names[0].lower()
+    return f"{names[0].lower()} and {names[1].lower()}"
+
+
+def enrich_domain_outputs(domain_outputs, signals):
+    """
+    Adds three frontend-facing fields to each domain's output, computed once
+    here so every consumer (frontend, PDF, anything else) gets the same
+    values rather than re-deriving them independently:
+
+    - severity_tier: a normalized enum so the frontend can color-code/sort
+      across all six domains without a per-domain lookup table of magic
+      label strings. Domain 1 (personality) intentionally gets "descriptive"
+      rather than a risk tier, since trait position is not a severity scale
+      and labeling it as such would misrepresent what the domain measures.
+    - domain_summary: a single plain-language sentence naming this domain's
+      actual top driver(s) by name, so a frontend can show real insight
+      immediately next to the raw driver list rather than just numbers.
+    - relative_magnitude (0-100) on each item in top_contributors: that
+      driver's contribution scaled against the largest contribution within
+      this domain's own top-3, so a frontend can size a bar directly without
+      re-implementing per-domain normalization itself.
+
+    Does not mutate inference_wrappers.py's output contract -- this is a
+    presentation-layer enrichment added only in the aggregator, which is
+    where domain-spanning/derived fields belong.
+    """
+    enriched = {}
+    for domain_key, d_data in domain_outputs.items():
+        placement = d_data.get("placement", {})
+        top_contribs = d_data.get("top_contributors", [])
+
+        # --- relative_magnitude per driver ---
+        max_val = max((abs(float(c.get("contribution", 0.0))) for c in top_contribs), default=0.0)
+        enriched_contribs = []
+        for c in top_contribs:
+            c_copy = dict(c)
+            try:
+                contrib = abs(float(c.get("contribution", 0.0)))
+                c_copy["relative_magnitude"] = round((contrib / max_val) * 100.0, 1) if max_val > 0 else 0.0
+            except (ValueError, TypeError):
+                c_copy["relative_magnitude"] = 0.0
+            enriched_contribs.append(c_copy)
+
+        # --- severity_tier + domain_summary, per domain ---
+        driver_phrase = _top_driver_phrase(top_contribs)
+
+        if domain_key == "domain_1_personality":
+            severity_tier = "descriptive"
+            domain_summary = (
+                f"Most shaped by {driver_phrase}." if driver_phrase
+                else "No single trait stands out strongly from the others."
+            )
+
+        elif domain_key == "domain_2_self_esteem":
+            pct = signals["rse_pct"]
+            if pct <= 25.0:
+                severity_tier = "high"
+            elif pct <= 45.0:
+                severity_tier = "moderate"
+            else:
+                severity_tier = "low"
+            domain_summary = (
+                f"Self-esteem ({signals['rse_classification'].lower()}) was most influenced by {driver_phrase}."
+                if driver_phrase else f"Self-esteem classified as {signals['rse_classification'].lower()}."
+            )
+
+        elif domain_key in ("domain_3_mood_sleep", "domain_3_mood_and_sleep"):
+            if signals["is_severe_mood"]:
+                severity_tier = "severe" if "Severe" in signals["mood_class"] and "Moderately" not in signals["mood_class"] else "high"
+            elif signals["is_moderate_mood"]:
+                severity_tier = "moderate"
+            else:
+                severity_tier = "low"
+            domain_summary = (
+                f"{signals['mood_class']} mood signal, driven mainly by {driver_phrase}."
+                if driver_phrase else f"{signals['mood_class']} mood signal."
+            )
+
+        elif domain_key in ("domain_4_digital_and_social", "domain_4_multitask"):
+            if signals["lone_score"] >= 50.0:
+                severity_tier = "high"
+            elif signals["lone_score"] >= 35.0:
+                severity_tier = "moderate"
+            else:
+                severity_tier = "low"
+            domain_summary = (
+                f"Loneliness and digital-use signals were most influenced by {driver_phrase}."
+                if driver_phrase else "Digital and social patterns are within a typical range."
+            )
+
+        elif domain_key == "domain_5_occupational_burnout":
+            if signals["is_high_burnout"]:
+                severity_tier = "severe" if "Severe" in signals["burnout_lvl"] else "high"
+            elif signals["is_elevated_burnout"]:
+                severity_tier = "moderate"
+            else:
+                severity_tier = "low"
+            domain_summary = (
+                f"{signals['burnout_lvl']}, driven mainly by {driver_phrase}."
+                if driver_phrase else f"{signals['burnout_lvl']}."
+            )
+
+        elif domain_key == "domain_6_severe_clinical":
+            if signals["is_severe_clinical"]:
+                severity_tier = "severe"
+            elif signals["anomaly_flag"]:
+                severity_tier = "high"
+            elif "Mild" in signals["friendly_condition"] or "Moderate" in signals["friendly_condition"]:
+                severity_tier = "moderate"
+            else:
+                severity_tier = "low"
+            anomaly_note = " An atypical response pattern was also flagged for review." if signals["anomaly_flag"] else ""
+            domain_summary = (
+                f"{signals['friendly_condition']}, most associated with {driver_phrase}.{anomaly_note}"
+                if driver_phrase else f"{signals['friendly_condition']}.{anomaly_note}"
+            )
+
+        else:
+            severity_tier = "unknown"
+            domain_summary = None
+
+        enriched_data = dict(d_data)
+        enriched_data["top_contributors"] = enriched_contribs
+        enriched_data["severity_tier"] = severity_tier
+        enriched_data["domain_summary"] = domain_summary
+        enriched[domain_key] = enriched_data
+
+    return enriched
+
+
+def evaluate_cross_domain_synthesis(domain_outputs):
+    """
+    Evaluates multi-domain results using a tiered clinical severity matrix 
+    to build an objective, streamlined overall mental health profile paragraph.
+    
+    Returns a single concise summary narrative string.
+    """
+    s = extract_domain_signals(domain_outputs)
+    p_est = s["p_est"]
+    rse_pct = s["rse_pct"]
+    mood_class = s["mood_class"]
+    phq_sum = s["phq_sum"]
+    lone_score = s["lone_score"]
+    burnout_lvl = s["burnout_lvl"]
+    friendly_condition = s["friendly_condition"]
+    anomaly_flag = s["anomaly_flag"]
+    is_severe_mood = s["is_severe_mood"]
+    is_moderate_mood = s["is_moderate_mood"]
+    is_high_burnout = s["is_high_burnout"]
+    is_elevated_burnout = s["is_elevated_burnout"]
 
     # -------------------------------------------------------------------------
     # 2. Tiered Matrix Evaluation Logic (Calibrated Strings)
@@ -156,6 +351,111 @@ def evaluate_cross_domain_synthesis(domain_outputs):
 
     return narrative
 
+
+def generate_plain_language_summary(domain_outputs):
+    """
+    Produces a short, plain-language overall wellbeing summary (a few sentences)
+    intended for the person taking the assessment to read directly -- distinct
+    from evaluate_cross_domain_synthesis()'s clinical-register narrative above.
+
+    Both functions read from extract_domain_signals() so they can never disagree
+    about the underlying numbers, even though they're written in different tones
+    for different audiences.
+
+    Important: this function describes patterns across six self-report
+    questionnaires. It does not diagnose any condition. When domain 6's signal
+    is genuinely severe (not just an isolated anomaly flag with everything else
+    low), it adds an explicit, unambiguous recommendation to seek professional
+    clinical support rather than softening or omitting that recommendation.
+    """
+    s = extract_domain_signals(domain_outputs)
+
+    # --- Personality, in plain terms ---
+    trait_scores = {
+        "extraversion": s["p_ext"], "emotional stability": s["p_est"],
+        "agreeableness": s["p_agr"], "conscientiousness": s["p_csn"], "openness": s["p_opn"]
+    }
+    standout_trait = max(trait_scores, key=lambda k: abs(trait_scores[k]))
+    standout_value = trait_scores[standout_trait]
+    if abs(standout_value) >= 0.3:
+        direction_word = "notably higher" if standout_value > 0 else "notably lower"
+        personality_line = f"their {standout_trait} stands out as {direction_word} than their other traits"
+    else:
+        personality_line = "their five personality traits are fairly balanced relative to one another"
+
+    # --- Self-esteem ---
+    self_esteem_line = f"self-esteem scored {int(s['rse_score'])} out of {int(s['rse_max'])} ({s['rse_classification'].lower()})"
+
+    # --- Mood and sleep ---
+    mood_line = f"a PHQ-9 mood screening score of {s['phq_sum']} ({s['mood_class'].lower()}), with about {s['sleep_hours']:.1f} hours of sleep"
+
+    # --- Digital and social ---
+    if s["lone_score"] >= 45.0:
+        social_tone = "elevated"
+    elif s["lone_score"] >= 30.0:
+        social_tone = "moderate"
+    else:
+        social_tone = "low"
+    social_line = f"{social_tone} loneliness signals alongside an internet-use pattern score of {s['addiction_score']:.0f}"
+
+    # --- Burnout ---
+    burnout_line = f"a {s['burnout_lvl'].lower()} (index {s['burnout_index']:.1f}) in their work life"
+
+    # --- Assemble the body sentence ---
+    body = (
+        f"Across the six areas measured, {personality_line}; {self_esteem_line}; "
+        f"{mood_line}; {social_line}; and {burnout_line}."
+    )
+
+    # --- Opening framing sentence, set by overall severity tier ---
+    if s["is_severe_clinical"]:
+        opening = (
+            "This assessment surfaced some signals worth taking seriously, particularly on the clinical "
+            f"screening section, where responses point toward a {s['friendly_condition'].lower()}."
+        )
+    elif s["anomaly_flag"] or s["is_severe_mood"] or s["is_high_burnout"]:
+        opening = (
+            "This assessment shows a mixed picture, with a few areas that look more strained than others."
+        )
+    elif s["is_moderate_mood"] or s["is_elevated_burnout"]:
+        opening = (
+            "Overall, this looks like a generally steady profile with one or two areas worth keeping an eye on."
+        )
+    else:
+        opening = "Overall, this profile looks stable and well-balanced across the areas measured."
+
+    # --- Closing line: escalate clearly when domain 6 is genuinely severe ---
+    recommend_professional_help = bool(s["is_severe_clinical"])
+    if s["is_severe_clinical"]:
+        closing = (
+            "Given these clinical screening results, we'd strongly encourage speaking with a mental health "
+            "professional -- a doctor, therapist, or counselor -- for a proper evaluation. This summary is "
+            "based on self-reported questionnaire patterns and is not a diagnosis."
+        )
+    elif s["anomaly_flag"]:
+        closing = (
+            "A professional check-in could help clarify a couple of these mixed signals, though nothing here "
+            "points to an urgent concern on its own."
+        )
+    else:
+        closing = "No immediate concerns stand out, but routine check-ins on mood, sleep, and workload are always worthwhile."
+
+    return {
+        "opening": opening,
+        "domain_recap": body,
+        "closing": closing,
+        "recommend_professional_help": recommend_professional_help,
+        # Full text retained for any consumer (e.g. the PDF) that wants one
+        # ready-to-display paragraph rather than assembling the three parts
+        # itself -- both forms are always generated from the same fields,
+        # so they can never drift apart from each other.
+        "full_text": f"{opening} {body} {closing}"
+    }
+
+
+# Backwards-compatible alias, in case any caller already imports the older name.
+evaluate_plain_language_synthesis = generate_plain_language_summary
+
 def generate_full_profile(user_responses):
     """
     Consumes raw questionnaire features, extracts diagnostic demographics,
@@ -205,8 +505,24 @@ def generate_full_profile(user_responses):
         "domain_6_severe_clinical": evaluate_domain6_clinical(normalized_inputs)
     }
         
-    # Execute cross-domain synthesis mapping pass
+    # Execute cross-domain synthesis mapping pass (clinical-register narrative).
+    # IMPORTANT: synthesis and enrichment both read from extract_domain_signals()
+    # against the RAW domain outputs (before enrichment), so enrichment never
+    # has a chance to feed back into the severity logic it depends on.
     global_summary = evaluate_cross_domain_synthesis(final_domain_outputs)
+
+    # Execute plain-language summary pass (person-facing wellbeing snapshot).
+    # Reads the exact same extracted signals as global_summary above, so the
+    # two will never describe the person's results inconsistently with each
+    # other, even though they're written for different audiences.
+    plain_summary = generate_plain_language_summary(final_domain_outputs)
+
+    # Enrich each domain's output with severity_tier, a one-line domain_summary,
+    # and relative_magnitude on each driver -- computed once here so the
+    # frontend (the primary consumer of this JSON) never has to re-derive
+    # them from raw numbers itself.
+    signals = extract_domain_signals(final_domain_outputs)
+    enriched_domain_outputs = enrich_domain_outputs(final_domain_outputs, signals)
     
     # -------------------------------------------------------------------------
     # LIVE DEMOGRAPHIC EXTRACTION LAYER
@@ -231,12 +547,13 @@ def generate_full_profile(user_responses):
     live_id = normalized_inputs.get("id_no", normalized_inputs.get("id", normalized_inputs.get("ID", f"MS-{live_timestamp}-ANONYMOUS")))
     
     return {
-        "schema_version": "3.9",
+        "schema_version": "4.0",
         "id_no": live_id,
         "age": live_age,
         "sex": live_sex,
-        "domain_scores": final_domain_outputs,
-        "global_synthesis": global_summary
+        "domain_scores": enriched_domain_outputs,
+        "global_synthesis": global_summary,
+        "plain_language_summary": plain_summary
     }
 
 if __name__ == "__main__":
@@ -252,8 +569,13 @@ if __name__ == "__main__":
         "unwanted_thoughts": 1, "repetitve_behaviors": 0, "overthinking": 1, "mind_going_blank": 0,
         "avoidance_of_social_activity": 0, "panic": 1, "hypervigilance": 0
     }
-    print("🧪 Running profile aggregator verification loop against v3.9 updates...")
+    print("🧪 Running profile aggregator verification loop against v4.0 updates...")
     test_output = generate_full_profile(sample_payload)
     print("\n✅ Success! Synthesis Result Sub-Keys:")
     print(f"   [Patient Sex] -> {test_output['sex']}")
     print(f"   [Global Synthesis Narrative] -> {test_output['global_synthesis']}")
+    print(f"   [Plain Language - Opening] -> {test_output['plain_language_summary']['opening']}")
+    print(f"   [Plain Language - Recommend Professional Help] -> {test_output['plain_language_summary']['recommend_professional_help']}")
+    print(f"   [Domain 1 severity_tier] -> {test_output['domain_scores']['domain_1_personality']['severity_tier']}")
+    print(f"   [Domain 1 domain_summary] -> {test_output['domain_scores']['domain_1_personality']['domain_summary']}")
+    print(f"   [Domain 6 severity_tier] -> {test_output['domain_scores']['domain_6_severe_clinical']['severity_tier']}")
