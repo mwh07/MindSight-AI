@@ -140,8 +140,8 @@ def run_standalone_training_suite():
             sys.exit(1)
     print("🎉 All 6 structural domains calibrated successfully.")
 
-def run_evaluation_pipeline(custom_csv_path=None, skip_cleanup=False):
-    """Runs the core deterministic 6-phase evaluation and packaging sequence."""
+def run_evaluation_pipeline(custom_csv_path=None):
+    """Runs the core deterministic 5-phase evaluation and packaging sequence."""
     individual_eval_dir = os.path.normpath(os.path.join(PROJECT_ROOT, "individual_eval"))
     os.makedirs(individual_eval_dir, exist_ok=True)
     
@@ -230,13 +230,18 @@ def run_evaluation_pipeline(custom_csv_path=None, skip_cleanup=False):
     
     dest_csv_path = os.path.join(archive_reports_dir, "responses.csv")
     shutil.copy(csv_path, dest_csv_path)
-    print(f"  └── 🎉 Stored successfully under: reports/report_{timestamp_token}/")
+    print(f"  ├── Packaged intake ledger -> {dest_csv_path}")
 
-    if not skip_cleanup:
-        print("\n[PHASE 6] CLEANUP WORKSPACE SANITIZATION")
-        flush_directory_contents(individual_eval_dir, "individual_eval/ (Post-Run Cleanup)")
-    else:
-        print("\n[PHASE 6] CLEANUP SKIPPED (--no-cleanup parameter active for debugging)")
+    # Save the identical report as 'current_report' inside individual_eval/
+    current_report_dir = os.path.join(individual_eval_dir, "current_report")
+    if os.path.exists(current_report_dir):
+        shutil.rmtree(current_report_dir)
+    shutil.copytree(archive_reports_dir, current_report_dir)
+    print(f"  ├── Saved report as current_report -> {current_report_dir}")
+
+    # Clean up the intermediate eval_* sandbox now that everything is packaged
+    shutil.rmtree(target_output_dir)
+    print(f"  └── Cleaned intermediate sandbox -> {target_output_dir}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -257,7 +262,6 @@ if __name__ == "__main__":
     
     # Advanced Diagnostics Configuration
     parser.add_argument('--csv-path', type=str, default=None, help="Direct the intake script to parse a customized input CSV path.")
-    parser.add_argument('--no-cleanup', action='store_true', help="Skips Phase 6 execution, keeping artifacts inside individual_eval/")
     
     # Documentation Info
     parser.add_argument('-m', '--manual', action='store_true', help="Display manual schematic showing all args and workflow details.")
@@ -282,14 +286,12 @@ if __name__ == "__main__":
         print("  --flush-all       : Structural reset across all three zones")
         print("\nADVANCED DIAGNOSTICS CONFIGURATION:")
         print("  --csv-path PATH   : Direct the intake script to parse a customized input CSV path.")
-        print("  --no-cleanup      : Skips Phase 6 execution, keeping artifacts inside individual_eval/")
         print("\nSYSTEM WORKFLOW SCHEMATIC DETAILS:")
         print("  [Phase 1] Initial Workspace Clean: Flushes everything inside individual_eval/ folder.")
         print("  [Phase 2] Weight Validation Check: Assesses models/saved_states/. Runs setup if empty.")
         print("  [Phase 3] Intake File Parsing     : Extracts the last row index from the target CSV file.")
         print("  [Phase 4] Inference Processing    : Resolves model states, writes timestamped JSON/PDF profiles.")
-        print("  [Phase 5] Structural Archival     : Packages matching CSV and workspace to reports/report_[timestamp]/")
-        print("  [Phase 6] System Scrub Cleanup    : Scrubs active sandbox memory out of individual_eval/ context.")
+        print("  [Phase 5] Structural Archival     : Packages matching CSV and workspace to reports/report_[timestamp]/ and saves as current_report in individual_eval/, then cleans the intermediate sandbox.")
         print("=" * 80)
         sys.exit(0)
         
@@ -317,12 +319,12 @@ if __name__ == "__main__":
         elif args.train:
             run_standalone_training_suite()
         elif args.eval:
-            run_evaluation_pipeline(custom_csv_path=args.csv_path, skip_cleanup=args.no_cleanup)
+            run_evaluation_pipeline(custom_csv_path=args.csv_path)
         else:
             # Default action if no operational mode parameter is explicitly passed
             if not any([args.survey, args.train]):
                 print("\n💡 No operational selector assigned. Running standard automated evaluation cycle...")
-                run_evaluation_pipeline(custom_csv_path=args.csv_path, skip_cleanup=args.no_cleanup)
+                run_evaluation_pipeline(custom_csv_path=args.csv_path)
                 
         print("\n" + "=" * 80)
         print("✨ MINDSIGHT PROCESS ROUTER OVERSEE COMPLETED SMOOTHLY")
