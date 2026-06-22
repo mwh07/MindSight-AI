@@ -1,16 +1,66 @@
-# Ignore local datasets and model weights (The heavy stuff causing the error)
-
-# Ignore Python specific files
+# ======================
+#  Python
+# ======================
 __pycache__/
+*.py[cod]
 *.pyc
 *.pyo
 *.pyd
 .Python
 env/
 venv/
+.venv/
 .env
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
 
-# Ignore operating system files
+# ======================
+#  Node.js / Frontend
+# ======================
+node_modules/
+frontend/node_modules/
+dist/
+build/
+.vite/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json   # optional – some teams keep it, but you can ignore if you prefer
+
+# ======================
+#  Data & Reports (HEAVY – don't push!)
+# ======================
+datasets/
+reports/
+*.csv
+*.pdf
+*.json
+*.h5
+*.pkl
+*.pt
+*.onnx
+*.pb
+
+# ======================
+#  IDE / OS
+# ======================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
-node_modules
+Desktop.ini
+
+# ======================
+#  Misc
+# ======================
+*.tmp
+*.bak
+*.orig
