@@ -37,14 +37,14 @@ package-lock.json   # optional – some teams keep it, but you can ignore if you
 # ======================
 datasets/
 reports/
-*.csv
-*.pdf
-*.json
-*.h5
-*.pkl
-*.pt
-*.onnx
-*.pb
+# *.csv
+# *.pdf
+# *.json
+# *.h5
+# *.pkl
+# *.pt
+# *.onnx
+# *.pb
 
 # ======================
 #  IDE / OS

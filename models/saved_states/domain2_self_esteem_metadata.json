@@ -1,0 +1,54 @@
+{
+  "schema_version": "3.0",
+  "domain": "domain_2_self_esteem",
+  "features": [
+    "age",
+    "gender",
+    "Q1",
+    "Q2",
+    "Q3",
+    "Q4",
+    "Q5",
+    "Q6",
+    "Q7",
+    "Q8",
+    "Q9",
+    "Q10"
+  ],
+  "scoring_config": {
+    "positive_items": [
+      "Q1",
+      "Q3",
+      "Q4",
+      "Q5",
+      "Q7",
+      "Q10"
+    ],
+    "negative_items": [
+      "Q2",
+      "Q6",
+      "Q8",
+      "Q9"
+    ],
+    "scale_bounds": [
+      1,
+      4
+    ],
+    "max_theoretical_score": 40
+  },
+  "demographic_mapping": {
+    "gender_codes": {
+      "0": "Male/Default",
+      "1": "Female",
+      "2": "Non-binary/Other"
+    },
+    "age_bands": [
+      "under_18",
+      "18_25",
+      "26_35",
+      "36_50",
+      "51_65",
+      "over_65"
+    ]
+  }
+}

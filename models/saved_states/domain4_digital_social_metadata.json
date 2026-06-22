@@ -1,0 +1,96 @@
+{
+  "schema_version": "2.6",
+  "domain": "domain_4_digital_and_social",
+  "features": [
+    "age",
+    "gender",
+    "IAT1",
+    "IAT2",
+    "IAT3",
+    "IAT4",
+    "IAT5",
+    "IAT6",
+    "IAT7",
+    "IAT8",
+    "IAT9",
+    "IAT10",
+    "loneliness1",
+    "loneliness2",
+    "loneliness3",
+    "loneliness4",
+    "loneliness5",
+    "loneliness6"
+  ],
+  "iat_features": [
+    "IAT1",
+    "IAT2",
+    "IAT3",
+    "IAT4",
+    "IAT5",
+    "IAT6",
+    "IAT7",
+    "IAT8",
+    "IAT9",
+    "IAT10"
+  ],
+  "loneliness_features": [
+    "loneliness1",
+    "loneliness2",
+    "loneliness3",
+    "loneliness4",
+    "loneliness5",
+    "loneliness6"
+  ],
+  "global_importances": {
+    "IAT1": 0.015071949506114703,
+    "IAT2": 0.14594316836737314,
+    "IAT3": 0.0501123395927431,
+    "IAT4": 0.02851552674903918,
+    "IAT5": 0.2876011635776316,
+    "IAT6": 0.08807710973820367,
+    "IAT7": 0.12377206776221049,
+    "IAT8": 0.060583463980094406,
+    "IAT9": 0.11750467487114932,
+    "IAT10": 0.08281853585544051,
+    "loneliness1": 0.033017337049638044,
+    "loneliness2": 0.12348978678526207,
+    "loneliness3": 0.174659586833757,
+    "loneliness4": 0.6009508908611929,
+    "loneliness5": 0.05551916952693536,
+    "loneliness6": 0.012363228943214531
+  },
+  "clinical_cutoffs": {
+    "internet_addiction": {
+      "Normal": [
+        0,
+        30
+      ],
+      "Mild": [
+        31,
+        49
+      ],
+      "Moderate": [
+        50,
+        79
+      ],
+      "Severe": [
+        80,
+        100
+      ]
+    },
+    "loneliness": {
+      "Low Loneliness": [
+        0,
+        24
+      ],
+      "Moderate Loneliness": [
+        25,
+        44
+      ],
+      "High Loneliness": [
+        45,
+        80
+      ]
+    }
+  }
+}

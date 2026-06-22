@@ -1,0 +1,25 @@
+{
+  "schema_version": "2.6",
+  "domain": "domain_6_severe_clinical",
+  "features": [
+    "unwanted_thoughts",
+    "repetitve_behaviors",
+    "overthinking",
+    "mind_going_blank",
+    "avoidance_of_social_activity",
+    "panic",
+    "hypervigilance"
+  ],
+  "classes": [
+    0,
+    1,
+    2
+  ],
+  "execution_mode": "production_ovr_wrapped_source_dataset",
+  "source_file_used": "datasets/ocd_symptoms_clean.csv",
+  "payload_contract": {
+    "classifier_key": "classifier",
+    "anomaly_key": "anomaly_detector",
+    "expected_type": "dictionary_multi_stack"
+  }
+}
