@@ -196,26 +196,26 @@ def run_evaluation_pipeline(custom_csv_path=None):
     try:
         import models.inference_wrappers
         import models.profile_aggregator
-        import models.pdf_generator
+        # import models.pdf_generator
         
         importlib.reload(models.inference_wrappers)
         importlib.reload(models.profile_aggregator)
-        importlib.reload(models.pdf_generator)
+        # importlib.reload(models.pdf_generator)
         
         from models.profile_aggregator import generate_full_profile
-        from models.pdf_generator import compile_pdf_report
+        # from models.pdf_generator import compile_pdf_report
         
         compiled_profile = generate_full_profile(sanitized_payload)
         
         output_json_path = os.path.join(target_output_dir, f"compiled_profile_{sandbox_dir_name}.json")
-        output_pdf_path = os.path.join(target_output_dir, f"Mindsight_Report_{sandbox_dir_name}.pdf")
+        # output_pdf_path = os.path.join(target_output_dir, f"Mindsight_Report_{sandbox_dir_name}.pdf")
         
         with open(output_json_path, "w", encoding='utf-8') as json_file:
             json.dump(compiled_profile, json_file, indent=2, cls=MindsightNumpyEncoder)
         print(f"  ├── Captured structural data payload -> {output_json_path}")
         
-        compile_pdf_report(compiled_profile, output_pdf_path)
-        print(f"  └── Rendered visualization profile -> {output_pdf_path}")
+        # compile_pdf_report(compiled_profile, output_pdf_path)
+        # print(f"  └── Rendered visualization profile -> {output_pdf_path}")
     except Exception as e:
         print(f"❌ PIPELINE ERROR: Analytics evaluation run crashed: {str(e)}")
         sys.exit(1)
@@ -224,22 +224,25 @@ def run_evaluation_pipeline(custom_csv_path=None):
     archive_reports_dir = os.path.normpath(os.path.join(PROJECT_ROOT, "reports", f"report_{timestamp_token}"))
     os.makedirs(archive_reports_dir, exist_ok=True)
     
-    dest_eval_folder = os.path.join(archive_reports_dir, sandbox_dir_name)
-    shutil.copytree(target_output_dir, dest_eval_folder)
-    print(f"  ├── Sent evaluation artifacts -> {dest_eval_folder}")
+    # Copy compiled JSON and CSV to the timestamped archive
+    shutil.copy(output_json_path, os.path.join(archive_reports_dir, f"compiled_profile_{sandbox_dir_name}.json"))
+    print(f"  ├── Archived profile JSON -> {archive_reports_dir}")
     
     dest_csv_path = os.path.join(archive_reports_dir, "responses.csv")
     shutil.copy(csv_path, dest_csv_path)
-    print(f"  ├── Packaged intake ledger -> {dest_csv_path}")
-
-    # Save the identical report as 'current_report' inside individual_eval/
+    print(f"  ├── Archived responses CSV -> {archive_reports_dir}")
+    
+    # Prepare current_report inside individual_eval/ (overwrite if exists)
     current_report_dir = os.path.join(individual_eval_dir, "current_report")
     if os.path.exists(current_report_dir):
         shutil.rmtree(current_report_dir)
-    shutil.copytree(archive_reports_dir, current_report_dir)
-    print(f"  ├── Saved report as current_report -> {current_report_dir}")
-
-    # Clean up the intermediate eval_* sandbox now that everything is packaged
+    os.makedirs(current_report_dir, exist_ok=True)
+    
+    shutil.copy(output_json_path, os.path.join(current_report_dir, f"compiled_profile_{sandbox_dir_name}.json"))
+    shutil.copy(csv_path, os.path.join(current_report_dir, "responses.csv"))
+    print(f"  ├── Saved as current_report -> {current_report_dir}")
+    
+    # Clean up the intermediate eval_* sandbox directory
     shutil.rmtree(target_output_dir)
     print(f"  └── Cleaned intermediate sandbox -> {target_output_dir}")
 
@@ -290,8 +293,8 @@ if __name__ == "__main__":
         print("  [Phase 1] Initial Workspace Clean: Flushes everything inside individual_eval/ folder.")
         print("  [Phase 2] Weight Validation Check: Assesses models/saved_states/. Runs setup if empty.")
         print("  [Phase 3] Intake File Parsing     : Extracts the last row index from the target CSV file.")
-        print("  [Phase 4] Inference Processing    : Resolves model states, writes timestamped JSON/PDF profiles.")
-        print("  [Phase 5] Structural Archival     : Packages matching CSV and workspace to reports/report_[timestamp]/ and saves as current_report in individual_eval/, then cleans the intermediate sandbox.")
+        print("  [Phase 4] Inference Processing    : Resolves model states, writes timestamped JSON (PDF disabled).")
+        print("  [Phase 5] Structural Archival     : Packages JSON + CSV to reports/report_[timestamp]/ and as current_report in individual_eval/, then removes intermediate sandbox.")
         print("=" * 80)
         sys.exit(0)
         

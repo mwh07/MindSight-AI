@@ -15,25 +15,39 @@ import xgboost as xgb
 import lightgbm as lgb
 import shap
 
-# Comprehensive Translation Layer to guarantee pristine, user-facing PDF text
-HUMAN_READABLE_MAPPINGS = {
-    "age": "Age Cohort Profile",
-    "work_hours_per_week": "Weekly Occupational Load",
-    "meetings_per_day": "Daily Meeting Velocity",
-    "work_life_balance_score": "Work-Life Boundary Integration",
-    "job_satisfaction_score": "Job Satisfaction Index",
-    "deadline_pressure_score": "Perceived Deadline Velocity",
-    "autonomy_score": "Workplace Autonomy",
-    "stress_score": "Reported Ambient Stress",
-    "social_support_score": "Social Support Resilience",
-    "unwanted_thoughts": "Intrusive Thought Frequency",
-    "repetitve_behaviors": "Compulsive Action Patterns",
-    "overthinking": "Cognitive Rumination Cycle",
-    "mind_going_blank": "Acute Attentional Dropouts",
-    "avoidance_of_social_activity": "Social Withdrawal Vectors",
-    "panic": "Somatic Panic Responses",
-    "hypervigilance": "Environmental Hypervigilance"
-}
+# Single source of truth for every feature's human-readable display name,
+# shared with pdf_generator.py. Previously this file had its own separate,
+# incomplete HUMAN_READABLE_MAPPINGS dict (covering only domains 5 and 6,
+# with label text that disagreed with feature_mappings.py for the same
+# features) -- that caused two real problems: (1) domains 1-4 had no
+# mapping at all, so raw codes like "IAT2" or "Q1" leaked straight into the
+# JSON's display_name field, and (2) domains 5-6 silently showed different
+# label text here than in the PDF for the exact same feature. Importing the
+# one complete map from feature_mappings.py fixes both at once.
+try:
+    from models.feature_mappings import FEATURE_TRANSLATION_MAP
+except ImportError:
+    try:
+        from feature_mappings import FEATURE_TRANSLATION_MAP
+    except ImportError:
+        FEATURE_TRANSLATION_MAP = {}
+
+
+def get_display_name(feature_key, fallback=None):
+    """
+    Single helper every domain below uses to resolve a feature's
+    human-readable label. Looks up FEATURE_TRANSLATION_MAP first; if a key
+    is genuinely absent from that map (e.g. a synthetic/derived feature like
+    "PHQ_Core" that isn't a raw questionnaire item), falls back to a
+    title-cased version of the raw key rather than ever leaving an
+    all-caps/raw code like "IAT2" in front of the person reading their own
+    report.
+    """
+    if feature_key in FEATURE_TRANSLATION_MAP:
+        return FEATURE_TRANSLATION_MAP[feature_key]
+    if fallback is not None:
+        return fallback
+    return feature_key.replace("_", " ").title()
 
 CLINICAL_SEVERITY_MAP = {
     0: "Baseline Healthy Profile",
@@ -201,7 +215,7 @@ def evaluate_domain2_self_esteem(raw_payload):
         
         item_contributions.append({
             "feature": f"Q{i}",
-            "display_name": f"Self-Esteem Item {i}",
+            "display_name": get_display_name(f"Q{i}", fallback=f"Self-Esteem Item {i}"),
             "contribution": round(float(abs(processed_val - 2.0)), 4),
             "direction": "+" if processed_val >= 2.0 else "-"
         })
@@ -322,7 +336,7 @@ def evaluate_domain4_multitask(raw_payload):
             if variance != 0:
                 contributors.append({
                     "feature": f_name,
-                    "display_name": f_name,
+                    "display_name": get_display_name(f_name),
                     "contribution": round(abs(variance), 4),
                     "direction": "+" if variance >= 0 else "-"
                 })
@@ -333,15 +347,15 @@ def evaluate_domain4_multitask(raw_payload):
             if variance != 0:
                 contributors.append({
                     "feature": f_name,
-                    "display_name": f"Loneliness{i+1}",
+                    "display_name": get_display_name(f_name, fallback=f"Loneliness{i+1}"),
                     "contribution": round(abs(variance), 4),
                     "direction": "+" if variance >= 0 else "-"
                 })
                 
         if not contributors:
             contributors = [
-                {"feature": "IAT1", "display_name": "IAT1", "contribution": 0.0, "direction": "+"},
-                {"feature": "loneliness1", "display_name": "Loneliness1", "contribution": 0.0, "direction": "+"}
+                {"feature": "IAT1", "display_name": get_display_name("IAT1"), "contribution": 0.0, "direction": "+"},
+                {"feature": "loneliness1", "display_name": get_display_name("loneliness1", fallback="Loneliness1"), "contribution": 0.0, "direction": "+"}
             ]
             
         return {
@@ -464,14 +478,14 @@ def evaluate_domain4_multitask(raw_payload):
                     val_weight = 0.0
                 contributors.append({
                     "feature": f_name,
-                    "display_name": f_name.upper() if "IAT" in f_name else f_name.replace("_", " ").title(),
+                    "display_name": get_display_name(f_name),
                     "contribution": round(float(abs(val_weight)), 4),
                     "direction": "+" if val_weight >= 0 else "-"
                 })
 
         if not contributors:
             for i in range(1, 4):
-                contributors.append({"feature": f"IAT{i}", "display_name": f"IAT{i}", "contribution": 0.0, "direction": "+"})
+                contributors.append({"feature": f"IAT{i}", "display_name": get_display_name(f"IAT{i}"), "contribution": 0.0, "direction": "+"})
 
         # Safely compute isolated index totals for contract mapping
         iat_vals = [float(raw_payload.get(f"IAT{i}", 3.0)) for i in range(1, 11)]
@@ -551,7 +565,7 @@ def evaluate_domain5_burnout(raw_payload):
                 weight = 0.0
             contributors.append({
                 "feature": f_name,
-                "display_name": HUMAN_READABLE_MAPPINGS.get(f_name, f_name.replace("_", " ").title()),
+                "display_name": get_display_name(f_name),
                 "contribution": round(float(abs(weight)), 4),
                 "direction": "+" if weight >= 0 else "-"
             })
@@ -563,7 +577,7 @@ def evaluate_domain5_burnout(raw_payload):
             raw_val = float(raw_payload.get(f_name, 3.0 if "score" in f_name else 30.0))
             contributors.append({
                 "feature": f_name,
-                "display_name": HUMAN_READABLE_MAPPINGS.get(f_name, f_name.replace("_", " ").title()),
+                "display_name": get_display_name(f_name),
                 "contribution": 0.0,
                 "direction": "?"
             })
@@ -639,7 +653,7 @@ def evaluate_domain6_clinical(raw_payload):
         # Keep track of true directionality based on underlying weight sign
         contributors.append({
             "feature": feat_name,
-            "display_name": HUMAN_READABLE_MAPPINGS.get(feat_name, feat_name.replace("_", " ").title()),
+            "display_name": get_display_name(feat_name),
             "contribution": round(float(abs(contribution_value)), 4),
             "direction": "+" if contribution_value >= 0 else "-"
         })
