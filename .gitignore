@@ -35,15 +35,11 @@ package-lock.json   # optional – some teams keep it, but you can ignore if you
 # ======================
 #  Data & Reports (HEAVY – don't push!)
 # ======================
-datasets/
-reports/
-docs/
-individual_report/current_report/
 # *.csv
 # *.pdf
 # *.json
 # *.h5
-*.pkl
+# *.pkl
 # *.pt
 # *.onnx
 # *.pb
