@@ -38,11 +38,12 @@ package-lock.json   # optional – some teams keep it, but you can ignore if you
 datasets/
 reports/
 docs/
+individual_report/current_report/
 # *.csv
 # *.pdf
 # *.json
 # *.h5
-# *.pkl
+*.pkl
 # *.pt
 # *.onnx
 # *.pb
