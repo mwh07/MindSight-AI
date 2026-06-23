@@ -166,16 +166,15 @@ def _build_scale_reference(domain_key, placement):
         }
 
     if domain_key in ("domain_4_digital_and_social", "domain_4_multitask"):
+        # Domain 4 now uses trained models for all three numeric predictions.
+        # Since the true range of these regression outputs is not known from
+        # the design (and depends on the training target distribution), we
+        # return None for all of them to prevent the frontend from inventing
+        # a fixed max/min. The frontend should display these as plain numbers
+        # rather than bar/gauges, or rely on classification labels.
         return {
-            # Raw sums over a 1-5 Likert scale per item -- a verifiable
-            # arithmetic bound given the known item count, not a guess.
-            "predicted_total_internet_addiction": {"type": "fixed_range", "min": 10, "max": 50},
-            "predicted_total_loneliness": {"type": "fixed_range", "min": 6, "max": 30},
-            # loneliness_score is the trained model's own regression output,
-            # not a raw sum -- its true range depends on the training target
-            # distribution, which isn't available here. Stating an invented
-            # bound for this would repeat the exact mistake already caught
-            # once on this same field (the PDF's hardcoded /80.0 scale).
+            "predicted_total_internet_addiction": None,
+            "predicted_total_loneliness": None,
             "loneliness_score": None
         }
 
@@ -206,9 +205,9 @@ def enrich_domain_outputs(domain_outputs, signals):
       actual top driver(s) by name, so a frontend can show real insight
       immediately next to the raw driver list rather than just numbers.
     - relative_magnitude (0-100) on each item in top_contributors: that
-      driver's contribution scaled against the largest contribution within
-      this domain's own top-3, so a frontend can size a bar directly without
-      re-implementing per-domain normalization itself.
+      driver's contribution as a percentage of the sum of all absolute
+      contributions in this domain, so it sums to 100% across contributors
+      and represents the fraction of total driving force.
     - scale_reference: explicit, sourced scale bounds (or an honest None
       when no real bound is knowable) so the frontend never has to guess
       axis/bar limits the way the old PDF generator did by hand each time.
@@ -222,14 +221,14 @@ def enrich_domain_outputs(domain_outputs, signals):
         placement = d_data.get("placement", {})
         top_contribs = d_data.get("top_contributors", [])
 
-        # --- relative_magnitude per driver ---
-        max_val = max((abs(float(c.get("contribution", 0.0))) for c in top_contribs), default=0.0)
+        # --- relative_magnitude per driver (fraction of total absolute contribution) ---
+        total_abs = sum(abs(float(c.get("contribution", 0.0))) for c in top_contribs)
         enriched_contribs = []
         for c in top_contribs:
             c_copy = dict(c)
             try:
                 contrib = abs(float(c.get("contribution", 0.0)))
-                c_copy["relative_magnitude"] = round((contrib / max_val) * 100.0, 1) if max_val > 0 else 0.0
+                c_copy["relative_magnitude"] = round((contrib / total_abs) * 100.0, 1) if total_abs > 0 else 0.0
             except (ValueError, TypeError):
                 c_copy["relative_magnitude"] = 0.0
             enriched_contribs.append(c_copy)

@@ -2,7 +2,7 @@
 """
 flush_reports.py
 
-Deletes all contents of the `individual_eval/` directory (files and subfolders)
+Deletes all contents of the `reports/` directory (files and subfolders)
 without confirmation, then places a .gitkeep file inside so the empty folder
 remains tracked by Git. Use with caution.
 """
@@ -12,20 +12,20 @@ import shutil
 import sys
 
 
-def flush_individual_eval():
+def flush_reports():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(script_dir)
-    eval_dir = os.path.join(project_root, "individual_eval")
+    reports_dir = os.path.join(project_root, "reports")
 
-    if not os.path.isdir(eval_dir):
-        print(f"Error: Directory not found: {eval_dir}")
+    if not os.path.isdir(reports_dir):
+        print(f"Error: Directory not found: {reports_dir}")
         sys.exit(1)
 
-    contents = os.listdir(eval_dir)
+    contents = os.listdir(reports_dir)
     if contents:
-        print(f"Deleting all contents of {eval_dir} ...")
+        print(f"Deleting all contents of {reports_dir} ...")
         for item in contents:
-            item_path = os.path.join(eval_dir, item)
+            item_path = os.path.join(reports_dir, item)
             try:
                 if os.path.isdir(item_path):
                     shutil.rmtree(item_path)
@@ -37,10 +37,10 @@ def flush_individual_eval():
                 print(f"Error removing {item_path}: {e}")
                 sys.exit(1)
     else:
-        print("individual_eval is already empty.")
+        print("reports/ is already empty.")
 
     # Write a fresh .gitkeep file
-    gitkeep_path = os.path.join(eval_dir, ".gitkeep")
+    gitkeep_path = os.path.join(reports_dir, ".gitkeep")
     with open(gitkeep_path, "w") as f:
         pass
     print(f"Created {gitkeep_path}")
@@ -49,4 +49,4 @@ def flush_individual_eval():
 
 
 if __name__ == "__main__":
-    flush_individual_eval()
+    flush_reports()

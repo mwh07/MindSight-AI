@@ -35,6 +35,7 @@ package-lock.json   # optional – some teams keep it, but you can ignore if you
 # ======================
 #  Data & Reports (HEAVY – don't push!)
 # ======================
+reports/
 # *.csv
 # *.pdf
 # *.json

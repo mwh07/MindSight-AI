@@ -190,7 +190,7 @@ def evaluate_domain2_self_esteem(raw_payload):
     FIX: Realigns input key routing to check for 'Q1'-'Q10' before falling back to 'RSE1'-'RSE10',
          and corrects reverse-scoring to map to the verified 0-4 numeric range.
     """
-    reverse_scoring_items = [2, 5, 6, 8, 9]
+    reverse_scoring_items = [3, 5, 8, 9, 10]
     total_score = 0
     item_contributions = []
     
@@ -358,12 +358,10 @@ def evaluate_domain4_multitask(raw_payload):
         return {
             "domain": "domain_4_digital_and_social",
             "placement": {
+                # Fallback uses raw sums (not model predictions)
                 "predicted_total_internet_addiction": round(pred_iat, 3),
                 "predicted_total_loneliness": round(pred_lone, 3),
-                # NOTE: this is a raw item-sum fallback, not a model prediction.
-                # It uses a clearly-labeled placeholder scale, not the model's real output scale,
-                # so it can never be mistaken for a genuine prediction if this path is ever hit.
-                "loneliness_score": round(pred_lone * 3.33, 3),
+                "loneliness_score": round(pred_lone * 3.33, 3),  # rough conversion to 0-100
                 "classification": "Elevated Distress Profile" if pred_lone > 18 else "Baseline Cohort Profile",
                 "data_source": "fallback_raw_sum"
             },
@@ -484,15 +482,17 @@ def evaluate_domain4_multitask(raw_payload):
             for i in range(1, 4):
                 contributors.append({"feature": f"IAT{i}", "display_name": get_display_name(f"IAT{i}"), "contribution": 0.0, "direction": "+"})
 
-        # Safely compute isolated index totals for contract mapping
-        iat_vals = [float(raw_payload.get(f"IAT{i}", 3.0)) for i in range(1, 11)]
-        lone_vals = [float(raw_payload.get(f"loneliness{i}", 3.0)) for i in range(1, 7)]
-
+        # -------------------------------------------------------------------------
+        # FIX: USE MODEL PREDICTIONS INSTEAD OF RAW SUMS
+        # -------------------------------------------------------------------------
+        # The raw sums are NOT used for the main placement fields.
+        # We keep them only for reference but do not store them.
+        # All three predicted fields now come from the trained models.
         return {
             "domain": "domain_4_digital_and_social",
             "placement": {
-                "predicted_total_internet_addiction": round(float(np.sum(iat_vals)), 3),
-                "predicted_total_loneliness": round(float(np.sum(lone_vals)), 3),
+                "predicted_total_internet_addiction": round(pred_addiction, 3),
+                "predicted_total_loneliness": round(pred_loneliness_score, 3),
                 "loneliness_score": round(pred_loneliness_score, 3),
                 "classification": "Elevated Distress Profile" if pred_loneliness_score > 50 else "Baseline Cohort Profile",
                 "data_source": "model_prediction"

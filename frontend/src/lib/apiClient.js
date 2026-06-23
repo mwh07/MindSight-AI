@@ -1,9 +1,9 @@
 // src/lib/apiClient.js
 import axios from 'axios';
 
-// src/lib/apiClient.js
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
+// Create axios instance
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -11,7 +11,7 @@ const apiClient = axios.create({
   },
 });
 
-// Add response interceptor for debugging
+// Response interceptor for debugging
 apiClient.interceptors.response.use(
   (response) => {
     console.log('✅ API Response:', response.data);
@@ -23,18 +23,14 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Named export for all API methods
 export const mindsightAPI = {
-  // Health check
   health: () => apiClient.get('/health'),
-  
-  // Submit assessment
   submitAssessment: (data) => apiClient.post('/assess', data),
-  
-  // Trigger training
   trainModels: () => apiClient.post('/train'),
-  
-  // Flush data
   flushData: (target = 'all') => apiClient.post('/flush', { target }),
+  latestReport: () => apiClient.get('/latest-report'),   // ✅ Added here
 };
 
-export default apiClient;
+// Default export for the raw client (for custom requests)
+export default apiClient; 

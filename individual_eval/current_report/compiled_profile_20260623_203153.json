@@ -1,0 +1,244 @@
+{
+  "schema_version": "4.0",
+  "id_no": "MS-20260623_203154-ANONYMOUS",
+  "age": 23,
+  "sex": "Female",
+  "domain_scores": {
+    "domain_1_personality": {
+      "domain": "domain_1_personality",
+      "placement": {
+        "extraversion": 0.1,
+        "emotional_stability": -0.6,
+        "agreeableness": 1.6,
+        "conscientiousness": 0.6,
+        "openness": 0.6
+      },
+      "top_contributors": [
+        {
+          "feature": "Agreeableness",
+          "display_name": "Agreeableness Vector",
+          "contribution": 1.6,
+          "direction": "+",
+          "relative_magnitude": 57.1
+        },
+        {
+          "feature": "Emotional_Stability",
+          "display_name": "Emotional_Stability Vector",
+          "contribution": 0.6,
+          "direction": "-",
+          "relative_magnitude": 21.4
+        },
+        {
+          "feature": "Conscientiousness",
+          "display_name": "Conscientiousness Vector",
+          "contribution": 0.6,
+          "direction": "+",
+          "relative_magnitude": 21.4
+        }
+      ],
+      "severity_tier": "descriptive",
+      "domain_summary": "Most shaped by agreeableness and emotional_stability.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": -4.0,
+        "max": 4.0
+      }
+    },
+    "domain_2_self_esteem": {
+      "domain": "domain_2_self_esteem",
+      "placement": {
+        "score": 34,
+        "max_possible_score": 40,
+        "classification": "High Self-Esteem"
+      },
+      "top_contributors": [
+        {
+          "feature": "Q1",
+          "display_name": "General Self-Satisfaction",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Q2",
+          "display_name": "Feelings of Devaluation or Inadequacy",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Q4",
+          "display_name": "Perceived Competence Relative to Peers",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        }
+      ],
+      "severity_tier": "low",
+      "domain_summary": "Self-esteem (high self-esteem) was most influenced by general self-satisfaction and feelings of devaluation or inadequacy.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": 0,
+        "max": 40
+      }
+    },
+    "domain_3_mood_sleep": {
+      "domain": "domain_3_mood_sleep",
+      "placement": {
+        "phq9_sum": 3,
+        "severity_label": "Minimal or Baseline Profile",
+        "calculated_sleep_duration_hours": 6.0
+      },
+      "top_contributors": [
+        {
+          "feature": "PHQ_Core",
+          "display_name": "Symptom Burden Summation",
+          "contribution": 3.0,
+          "direction": "+",
+          "relative_magnitude": 66.7
+        },
+        {
+          "feature": "Sleep_Duration",
+          "display_name": "Calculated Sleep Duration",
+          "contribution": 1.5,
+          "direction": "-",
+          "relative_magnitude": 33.3
+        }
+      ],
+      "severity_tier": "low",
+      "domain_summary": "Minimal or Baseline Profile mood signal, driven mainly by symptom burden summation and calculated sleep duration.",
+      "scale_reference": {
+        "phq9_sum": {
+          "type": "fixed_range",
+          "min": 0,
+          "max": 27
+        },
+        "sleep_duration_hours": {
+          "type": "reference_band",
+          "low": 7.0,
+          "high": 9.0
+        }
+      }
+    },
+    "domain_4_digital_and_social": {
+      "domain": "domain_4_digital_and_social",
+      "placement": {
+        "predicted_total_internet_addiction": 35.001,
+        "predicted_total_loneliness": 50.32,
+        "loneliness_score": 50.32,
+        "classification": "Elevated Distress Profile",
+        "data_source": "model_prediction"
+      },
+      "top_contributors": [
+        {
+          "feature": "IAT2",
+          "display_name": "Neglect of Domestic Duties for Internet",
+          "contribution": 4.7469,
+          "direction": "+",
+          "relative_magnitude": 38.6
+        },
+        {
+          "feature": "IAT6",
+          "display_name": "Academic or Work Output Decline",
+          "contribution": 4.1374,
+          "direction": "+",
+          "relative_magnitude": 33.6
+        },
+        {
+          "feature": "loneliness3",
+          "display_name": "Social Isolation / Distance from Peers",
+          "contribution": 3.422,
+          "direction": "+",
+          "relative_magnitude": 27.8
+        }
+      ],
+      "severity_tier": "high",
+      "domain_summary": "Loneliness and digital-use signals were most influenced by neglect of domestic duties for internet and academic or work output decline.",
+      "scale_reference": {
+        "predicted_total_internet_addiction": null,
+        "predicted_total_loneliness": null,
+        "loneliness_score": null
+      }
+    },
+    "domain_5_occupational_burnout": {
+      "domain": "domain_5_occupational_burnout",
+      "placement": {
+        "burnout_index": 4.568,
+        "burnout_tier_label": "Moderate Burnout Profile",
+        "tier_thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
+      },
+      "top_contributors": [
+        {
+          "feature": "stress_score",
+          "display_name": "General Perceived Stress Load",
+          "contribution": 1.9878,
+          "direction": "-",
+          "relative_magnitude": 60.4
+        },
+        {
+          "feature": "meetings_per_day",
+          "display_name": "Daily Meeting & Communication Load",
+          "contribution": 0.8199,
+          "direction": "+",
+          "relative_magnitude": 24.9
+        },
+        {
+          "feature": "work_life_balance_score",
+          "display_name": "Subjective Work-Life Equilibrium",
+          "contribution": 0.483,
+          "direction": "+",
+          "relative_magnitude": 14.7
+        }
+      ],
+      "severity_tier": "moderate",
+      "domain_summary": "Moderate Burnout Profile, driven mainly by general perceived stress load and daily meeting & communication load.",
+      "scale_reference": {
+        "type": "tier_thresholds",
+        "thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
+      }
+    },
+    "domain_6_severe_clinical": {
+      "domain": "domain_6_severe_clinical",
+      "placement": {
+        "predicted_condition_code": 1,
+        "predicted_condition_label": "Mild Symptomatic Profile",
+        "anomaly_review_flag": true
+      },
+      "top_contributors": [
+        {
+          "feature": "overthinking",
+          "display_name": "Maladaptive Rumination Cycle",
+          "contribution": 7.316,
+          "direction": "+",
+          "relative_magnitude": 50.0
+        },
+        {
+          "feature": "mind_going_blank",
+          "display_name": "Acute Cognitive Blocking under Stress",
+          "contribution": 7.3143,
+          "direction": "+",
+          "relative_magnitude": 50.0
+        }
+      ],
+      "severity_tier": "high",
+      "domain_summary": "Mild Symptomatic Profile, most associated with maladaptive rumination cycle and acute cognitive blocking under stress. An atypical response pattern was also flagged for review.",
+      "scale_reference": null
+    }
+  },
+  "global_synthesis": "COMPLEX PROFILE EVALUATION: Unsupervised screening models flag an atypical response configuration. While tracking markers align closely with the Mild Symptomatic Profile, the overall structure falls outside standard baseline distributions concurrently with elevated clinical metrics (PHQ-9 Sum: 3). A comprehensive professional differential evaluation is recommended to reconcile these mixed indicators.",
+  "plain_language_summary": {
+    "opening": "This assessment shows a mixed picture, with a few areas that look more strained than others.",
+    "domain_recap": "Across the six areas measured, their agreeableness stands out as notably higher than their other traits; self-esteem scored 34 out of 40 (high self-esteem); a PHQ-9 mood screening score of 3 (minimal or baseline profile), with about 6.0 hours of sleep; elevated loneliness signals alongside an internet-use pattern score of 35; and a moderate burnout profile (index 4.6) in their work life.",
+    "closing": "A professional check-in could help clarify a couple of these mixed signals, though nothing here points to an urgent concern on its own.",
+    "recommend_professional_help": false,
+    "full_text": "This assessment shows a mixed picture, with a few areas that look more strained than others. Across the six areas measured, their agreeableness stands out as notably higher than their other traits; self-esteem scored 34 out of 40 (high self-esteem); a PHQ-9 mood screening score of 3 (minimal or baseline profile), with about 6.0 hours of sleep; elevated loneliness signals alongside an internet-use pattern score of 35; and a moderate burnout profile (index 4.6) in their work life. A professional check-in could help clarify a couple of these mixed signals, though nothing here points to an urgent concern on its own."
+  }
+}

@@ -7,7 +7,7 @@ export const QUESTIONNAIRE_SECTIONS = [
     id: "personality",
     title: "DOMAIN 1: PERSONALITY",
     description: "Indicate how much you agree or disagree with each statement.",
-    scale: ["Disagree", "Slightly Disagree", "Neutral", "Slightly Agree", "Agree"],
+    scale: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"],
     scaleValues: [1, 2, 3, 4, 5],
     questions: [
       { id: "EXT1", text: "I am the life of the party." },
@@ -31,7 +31,7 @@ export const QUESTIONNAIRE_SECTIONS = [
     id: "self_esteem",
     title: "DOMAIN 2: SELF-ESTEEM",
     description: "Indicate how much you agree or disagree with each statement.",
-    scale: ["Disagree", "Slightly Disagree", "Neutral", "Slightly Agree", "Agree"],
+    scale: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"],
     scaleValues: [1, 2, 3, 4, 5],
     questions: [
       { id: "Q1", text: "I feel that I am a person of worth, at least on an equal plane with others." },
@@ -101,7 +101,7 @@ export const QUESTIONNAIRE_SECTIONS = [
     title: "DOMAIN 4: DIGITAL AND SOCIAL RISK - Loneliness",
     description: "Indicate how often you feel the following.",
     scale: ["Never", "Rarely", "Sometimes", "Often"],
-    scaleValues: [0, 1, 2, 3],
+    scaleValues: [1,2,3,4],
     questions: [
       { id: "loneliness1", text: "How often do you feel completely 'in tune' with the people around you?" },
       { id: "loneliness2", text: "How often do you feel that you severely lack deep companionship?" },
