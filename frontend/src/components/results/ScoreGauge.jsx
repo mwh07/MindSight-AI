@@ -12,10 +12,10 @@ export default function ScoreGauge({
   className = ""
 }) {
   const percentage = Math.min((value / maxValue) * 100, 100);
-  const circumference = 2 * Math.PI * 45;
-  const offset = circumference - (percentage / 100) * circumference;
   const center = size / 2;
   const radius = size / 2 - 10;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percentage / 100) * circumference;
 
   return (
     <div className={`flex flex-col items-center ${className}`}>
