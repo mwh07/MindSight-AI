@@ -1,6 +1,6 @@
 {
   "schema_version": "4.0",
-  "id_no": "MS-20260622_170630-ANONYMOUS",
+  "id_no": "MS-20260623_104059-ANONYMOUS",
   "age": 21,
   "sex": "Male",
   "domain_scores": {
@@ -37,7 +37,12 @@
         }
       ],
       "severity_tier": "descriptive",
-      "domain_summary": "Most shaped by agreeableness and extraversion."
+      "domain_summary": "Most shaped by agreeableness and extraversion.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": -4.0,
+        "max": 4.0
+      }
     },
     "domain_2_self_esteem": {
       "domain": "domain_2_self_esteem",
@@ -70,7 +75,12 @@
         }
       ],
       "severity_tier": "low",
-      "domain_summary": "Self-esteem (normal) was most influenced by general self-satisfaction and feelings of devaluation or inadequacy."
+      "domain_summary": "Self-esteem (normal) was most influenced by general self-satisfaction and feelings of devaluation or inadequacy.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": 0,
+        "max": 40
+      }
     },
     "domain_3_mood_sleep": {
       "domain": "domain_3_mood_sleep",
@@ -96,7 +106,19 @@
         }
       ],
       "severity_tier": "low",
-      "domain_summary": "Mild Depression mood signal, driven mainly by symptom burden summation and calculated sleep duration."
+      "domain_summary": "Mild Depression mood signal, driven mainly by symptom burden summation and calculated sleep duration.",
+      "scale_reference": {
+        "phq9_sum": {
+          "type": "fixed_range",
+          "min": 0,
+          "max": 27
+        },
+        "sleep_duration_hours": {
+          "type": "reference_band",
+          "low": 7.0,
+          "high": 9.0
+        }
+      }
     },
     "domain_4_digital_and_social": {
       "domain": "domain_4_digital_and_social",
@@ -131,13 +153,31 @@
         }
       ],
       "severity_tier": "high",
-      "domain_summary": "Loneliness and digital-use signals were most influenced by neglect of domestic duties for internet and academic or work output decline."
+      "domain_summary": "Loneliness and digital-use signals were most influenced by neglect of domestic duties for internet and academic or work output decline.",
+      "scale_reference": {
+        "predicted_total_internet_addiction": {
+          "type": "fixed_range",
+          "min": 10,
+          "max": 50
+        },
+        "predicted_total_loneliness": {
+          "type": "fixed_range",
+          "min": 6,
+          "max": 30
+        },
+        "loneliness_score": null
+      }
     },
     "domain_5_occupational_burnout": {
       "domain": "domain_5_occupational_burnout",
       "placement": {
         "burnout_index": 5.341,
-        "burnout_tier_label": "Moderate Burnout Profile"
+        "burnout_tier_label": "Moderate Burnout Profile",
+        "tier_thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
       },
       "top_contributors": [
         {
@@ -163,7 +203,15 @@
         }
       ],
       "severity_tier": "moderate",
-      "domain_summary": "Moderate Burnout Profile, driven mainly by daily meeting & communication load and weekly professional output hours."
+      "domain_summary": "Moderate Burnout Profile, driven mainly by daily meeting & communication load and weekly professional output hours.",
+      "scale_reference": {
+        "type": "tier_thresholds",
+        "thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
+      }
     },
     "domain_6_severe_clinical": {
       "domain": "domain_6_severe_clinical",
@@ -196,7 +244,8 @@
         }
       ],
       "severity_tier": "high",
-      "domain_summary": "Mild Symptomatic Profile, most associated with active social withdrawal / avoidance and acute cognitive blocking under stress. An atypical response pattern was also flagged for review."
+      "domain_summary": "Mild Symptomatic Profile, most associated with active social withdrawal / avoidance and acute cognitive blocking under stress. An atypical response pattern was also flagged for review.",
+      "scale_reference": null
     }
   },
   "global_synthesis": "COMPLEX PROFILE EVALUATION: Unsupervised screening models flag an atypical response configuration. While tracking markers align closely with the Mild Symptomatic Profile, the overall structure falls outside standard baseline distributions concurrently with elevated clinical metrics (PHQ-9 Sum: 7). A comprehensive professional differential evaluation is recommended to reconcile these mixed indicators.",
