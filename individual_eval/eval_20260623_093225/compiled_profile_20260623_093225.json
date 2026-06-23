@@ -1,8 +1,8 @@
 {
   "schema_version": "4.0",
-  "id_no": "MS-20260622_170630-ANONYMOUS",
-  "age": 21,
-  "sex": "Male",
+  "id_no": "MS-20260623_093228-ANONYMOUS",
+  "age": 23,
+  "sex": "Female",
   "domain_scores": {
     "domain_1_personality": {
       "domain": "domain_1_personality",
@@ -136,30 +136,30 @@
     "domain_5_occupational_burnout": {
       "domain": "domain_5_occupational_burnout",
       "placement": {
-        "burnout_index": 5.341,
+        "burnout_index": 5.32,
         "burnout_tier_label": "Moderate Burnout Profile"
       },
       "top_contributors": [
         {
           "feature": "meetings_per_day",
           "display_name": "Daily Meeting & Communication Load",
-          "contribution": 0.723,
+          "contribution": 0.7227,
           "direction": "+",
           "relative_magnitude": 100.0
         },
         {
           "feature": "work_hours_per_week",
           "display_name": "Weekly Professional Output Hours",
-          "contribution": 0.3887,
+          "contribution": 0.3978,
           "direction": "-",
-          "relative_magnitude": 53.8
+          "relative_magnitude": 55.0
         },
         {
           "feature": "social_support_score",
           "display_name": "Workplace Peer & Structural Support",
-          "contribution": 0.1829,
+          "contribution": 0.1869,
           "direction": "-",
-          "relative_magnitude": 25.3
+          "relative_magnitude": 25.9
         }
       ],
       "severity_tier": "moderate",

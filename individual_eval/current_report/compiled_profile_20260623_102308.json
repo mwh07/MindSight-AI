@@ -1,0 +1,210 @@
+{
+  "schema_version": "4.0",
+  "id_no": "MS-20260623_102310-ANONYMOUS",
+  "age": 24,
+  "sex": "Male",
+  "domain_scores": {
+    "domain_1_personality": {
+      "domain": "domain_1_personality",
+      "placement": {
+        "extraversion": -0.1,
+        "emotional_stability": -1.6,
+        "agreeableness": -4.0,
+        "conscientiousness": -2.4,
+        "openness": -4.0
+      },
+      "top_contributors": [
+        {
+          "feature": "Agreeableness",
+          "display_name": "Agreeableness Vector",
+          "contribution": 4.0,
+          "direction": "-",
+          "relative_magnitude": 100.0
+        },
+        {
+          "feature": "Openness",
+          "display_name": "Openness Vector",
+          "contribution": 4.0,
+          "direction": "-",
+          "relative_magnitude": 100.0
+        },
+        {
+          "feature": "Conscientiousness",
+          "display_name": "Conscientiousness Vector",
+          "contribution": 2.4,
+          "direction": "-",
+          "relative_magnitude": 60.0
+        }
+      ],
+      "severity_tier": "descriptive",
+      "domain_summary": "Most shaped by agreeableness and openness."
+    },
+    "domain_2_self_esteem": {
+      "domain": "domain_2_self_esteem",
+      "placement": {
+        "score": 17,
+        "max_possible_score": 40,
+        "classification": "Low Self-Esteem"
+      },
+      "top_contributors": [
+        {
+          "feature": "Q5",
+          "display_name": "Sense of Self-Pride",
+          "contribution": 2.0,
+          "direction": "-",
+          "relative_magnitude": 100.0
+        },
+        {
+          "feature": "Q9",
+          "display_name": "Inclination to Feel Like a Failure",
+          "contribution": 2.0,
+          "direction": "-",
+          "relative_magnitude": 100.0
+        },
+        {
+          "feature": "Q10",
+          "display_name": "Positive Attitude Toward Self",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 100.0
+        }
+      ],
+      "severity_tier": "moderate",
+      "domain_summary": "Self-esteem (low self-esteem) was most influenced by sense of self-pride and inclination to feel like a failure."
+    },
+    "domain_3_mood_sleep": {
+      "domain": "domain_3_mood_sleep",
+      "placement": {
+        "phq9_sum": 21,
+        "severity_label": "Severe Depression",
+        "calculated_sleep_duration_hours": 0.22
+      },
+      "top_contributors": [
+        {
+          "feature": "PHQ_Core",
+          "display_name": "Symptom Burden Summation",
+          "contribution": 21.0,
+          "direction": "+",
+          "relative_magnitude": 100.0
+        },
+        {
+          "feature": "Sleep_Duration",
+          "display_name": "Calculated Sleep Duration",
+          "contribution": 7.2833,
+          "direction": "-",
+          "relative_magnitude": 34.7
+        }
+      ],
+      "severity_tier": "severe",
+      "domain_summary": "Severe Depression mood signal, driven mainly by symptom burden summation and calculated sleep duration."
+    },
+    "domain_4_digital_and_social": {
+      "domain": "domain_4_digital_and_social",
+      "placement": {
+        "predicted_total_internet_addiction": 50.0,
+        "predicted_total_loneliness": 15.0,
+        "loneliness_score": 46.976,
+        "classification": "Baseline Cohort Profile",
+        "data_source": "model_prediction"
+      },
+      "top_contributors": [
+        {
+          "feature": "IAT5",
+          "display_name": "Fear of Missing Out / Digital Dependence",
+          "contribution": 9.151,
+          "direction": "+",
+          "relative_magnitude": 100.0
+        },
+        {
+          "feature": "IAT2",
+          "display_name": "Neglect of Domestic Duties for Internet",
+          "contribution": 6.0316,
+          "direction": "+",
+          "relative_magnitude": 65.9
+        },
+        {
+          "feature": "IAT10",
+          "display_name": "Preoccupation with Reconnecting",
+          "contribution": 5.7394,
+          "direction": "+",
+          "relative_magnitude": 62.7
+        }
+      ],
+      "severity_tier": "moderate",
+      "domain_summary": "Loneliness and digital-use signals were most influenced by fear of missing out / digital dependence and neglect of domestic duties for internet."
+    },
+    "domain_5_occupational_burnout": {
+      "domain": "domain_5_occupational_burnout",
+      "placement": {
+        "burnout_index": 6.743,
+        "burnout_tier_label": "High Burnout Risk"
+      },
+      "top_contributors": [
+        {
+          "feature": "stress_score",
+          "display_name": "General Perceived Stress Load",
+          "contribution": 3.4207,
+          "direction": "+",
+          "relative_magnitude": 100.0
+        },
+        {
+          "feature": "work_hours_per_week",
+          "display_name": "Weekly Professional Output Hours",
+          "contribution": 0.7354,
+          "direction": "-",
+          "relative_magnitude": 21.5
+        },
+        {
+          "feature": "work_life_balance_score",
+          "display_name": "Subjective Work-Life Equilibrium",
+          "contribution": 0.6541,
+          "direction": "+",
+          "relative_magnitude": 19.1
+        }
+      ],
+      "severity_tier": "high",
+      "domain_summary": "High Burnout Risk, driven mainly by general perceived stress load and weekly professional output hours."
+    },
+    "domain_6_severe_clinical": {
+      "domain": "domain_6_severe_clinical",
+      "placement": {
+        "predicted_condition_code": 1,
+        "predicted_condition_label": "Mild Symptomatic Profile",
+        "anomaly_review_flag": true
+      },
+      "top_contributors": [
+        {
+          "feature": "panic",
+          "display_name": "Somatic Panic Sensations",
+          "contribution": 8.2577,
+          "direction": "+",
+          "relative_magnitude": 100.0
+        },
+        {
+          "feature": "hypervigilance",
+          "display_name": "Autonomic Hyperarousal & Guardedness",
+          "contribution": 8.1428,
+          "direction": "+",
+          "relative_magnitude": 98.6
+        },
+        {
+          "feature": "mind_going_blank",
+          "display_name": "Acute Cognitive Blocking under Stress",
+          "contribution": 7.3143,
+          "direction": "+",
+          "relative_magnitude": 88.6
+        }
+      ],
+      "severity_tier": "severe",
+      "domain_summary": "Mild Symptomatic Profile, most associated with somatic panic sensations and autonomic hyperarousal & guardedness. An atypical response pattern was also flagged for review."
+    }
+  },
+  "global_synthesis": "ACUTE PROFILE EVALUATION: Multi-domain tracking reveals a dense intersection of severe mood indicators (Severe Depression, PHQ-9 Sum: 21) running concurrently with significant systemic exhaustion (High Burnout Risk). This presentation is characteristic of severe burnout-depression crossover, indicating that environmental pressures have exceeded active coping capacities. Formal clinical guidance and structured workload mitigation are recommended to support stabilization.",
+  "plain_language_summary": {
+    "opening": "This assessment surfaced some signals worth taking seriously, particularly on the clinical screening section, where responses point toward a mild symptomatic profile.",
+    "domain_recap": "Across the six areas measured, their agreeableness stands out as notably lower than their other traits; self-esteem scored 17 out of 40 (low self-esteem); a PHQ-9 mood screening score of 21 (severe depression), with about 0.2 hours of sleep; elevated loneliness signals alongside an internet-use pattern score of 50; and a high burnout risk (index 6.7) in their work life.",
+    "closing": "Given these clinical screening results, we'd strongly encourage speaking with a mental health professional -- a doctor, therapist, or counselor -- for a proper evaluation. This summary is based on self-reported questionnaire patterns and is not a diagnosis.",
+    "recommend_professional_help": true,
+    "full_text": "This assessment surfaced some signals worth taking seriously, particularly on the clinical screening section, where responses point toward a mild symptomatic profile. Across the six areas measured, their agreeableness stands out as notably lower than their other traits; self-esteem scored 17 out of 40 (low self-esteem); a PHQ-9 mood screening score of 21 (severe depression), with about 0.2 hours of sleep; elevated loneliness signals alongside an internet-use pattern score of 50; and a high burnout risk (index 6.7) in their work life. Given these clinical screening results, we'd strongly encourage speaking with a mental health professional -- a doctor, therapist, or counselor -- for a proper evaluation. This summary is based on self-reported questionnaire patterns and is not a diagnosis."
+  }
+}
