@@ -133,11 +133,69 @@ def _top_driver_phrase(top_contributors, n=2):
     return f"{names[0].lower()} and {names[1].lower()}"
 
 
+def _build_scale_reference(domain_key, placement):
+    """
+    Returns scale context for the frontend to size bars/gauges honestly,
+    sourced only from real, verifiable facts -- never invented numbers.
+    Returns None for any value whose true range isn't actually knowable
+    from the model/design itself (e.g. a regression model's raw output),
+    rather than guessing a plausible-looking bound. A frontend receiving
+    None here should render that value as a plain number, not a bar.
+    """
+    if domain_key == "domain_1_personality":
+        # Real bound: inference_wrappers.py's GRM scoring grid is
+        # np.linspace(-4.0, 4.0, 81) -- this is the actual evaluation range
+        # used to fit theta, not an estimate.
+        return {"type": "fixed_range", "min": -4.0, "max": 4.0}
+
+    if domain_key == "domain_2_self_esteem":
+        # Already self-describing via max_possible_score; min is always 0
+        # since the RSE reverse-coded sum cannot go negative.
+        return {"type": "fixed_range", "min": 0, "max": placement.get("max_possible_score", 40)}
+
+    if domain_key in ("domain_3_mood_sleep", "domain_3_mood_and_sleep"):
+        # PHQ-9 sum: 9 items, each scored 0-3 after refusal-code filtering --
+        # a textbook, NHANES-standard bound, not a guess.
+        return {
+            "phq9_sum": {"type": "fixed_range", "min": 0, "max": 27},
+            # Sleep duration has no universal hard min/max -- this is a
+            # commonly cited clinical NORMAL RANGE for adults, presented
+            # explicitly as a reference band rather than a scale bound, so
+            # the frontend doesn't mistake "outside this band" for "invalid".
+            "sleep_duration_hours": {"type": "reference_band", "low": 7.0, "high": 9.0}
+        }
+
+    if domain_key in ("domain_4_digital_and_social", "domain_4_multitask"):
+        return {
+            # Raw sums over a 1-5 Likert scale per item -- a verifiable
+            # arithmetic bound given the known item count, not a guess.
+            "predicted_total_internet_addiction": {"type": "fixed_range", "min": 10, "max": 50},
+            "predicted_total_loneliness": {"type": "fixed_range", "min": 6, "max": 30},
+            # loneliness_score is the trained model's own regression output,
+            # not a raw sum -- its true range depends on the training target
+            # distribution, which isn't available here. Stating an invented
+            # bound for this would repeat the exact mistake already caught
+            # once on this same field (the PDF's hardcoded /80.0 scale).
+            "loneliness_score": None
+        }
+
+    if domain_key == "domain_5_occupational_burnout":
+        # Sourced directly from inference_wrappers.py's own placement output
+        # (tier_thresholds), which reads the real metadata thresholds at
+        # inference time -- nothing invented here, just passed through.
+        thresholds = placement.get("tier_thresholds")
+        return {"type": "tier_thresholds", "thresholds": thresholds} if thresholds else None
+
+    # Domain 6 needs no numeric scale -- predicted_condition_label and
+    # anomaly_review_flag are already self-contained categorical signals.
+    return None
+
+
 def enrich_domain_outputs(domain_outputs, signals):
     """
-    Adds three frontend-facing fields to each domain's output, computed once
-    here so every consumer (frontend, PDF, anything else) gets the same
-    values rather than re-deriving them independently:
+    Adds four frontend-facing fields to each domain's output, computed once
+    here so every consumer gets the same values rather than re-deriving them
+    independently:
 
     - severity_tier: a normalized enum so the frontend can color-code/sort
       across all six domains without a per-domain lookup table of magic
@@ -151,10 +209,13 @@ def enrich_domain_outputs(domain_outputs, signals):
       driver's contribution scaled against the largest contribution within
       this domain's own top-3, so a frontend can size a bar directly without
       re-implementing per-domain normalization itself.
+    - scale_reference: explicit, sourced scale bounds (or an honest None
+      when no real bound is knowable) so the frontend never has to guess
+      axis/bar limits the way the old PDF generator did by hand each time.
 
-    Does not mutate inference_wrappers.py's output contract -- this is a
-    presentation-layer enrichment added only in the aggregator, which is
-    where domain-spanning/derived fields belong.
+    This is the sole presentation contract now that PDF generation has been
+    discarded -- everything a frontend needs to render each domain without
+    guessing belongs here.
     """
     enriched = {}
     for domain_key, d_data in domain_outputs.items():
@@ -255,6 +316,7 @@ def enrich_domain_outputs(domain_outputs, signals):
         enriched_data["top_contributors"] = enriched_contribs
         enriched_data["severity_tier"] = severity_tier
         enriched_data["domain_summary"] = domain_summary
+        enriched_data["scale_reference"] = _build_scale_reference(domain_key, placement)
         enriched[domain_key] = enriched_data
 
     return enriched

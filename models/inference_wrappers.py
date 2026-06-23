@@ -15,15 +15,12 @@ import xgboost as xgb
 import lightgbm as lgb
 import shap
 
-# Single source of truth for every feature's human-readable display name,
-# shared with pdf_generator.py. Previously this file had its own separate,
-# incomplete HUMAN_READABLE_MAPPINGS dict (covering only domains 5 and 6,
-# with label text that disagreed with feature_mappings.py for the same
-# features) -- that caused two real problems: (1) domains 1-4 had no
-# mapping at all, so raw codes like "IAT2" or "Q1" leaked straight into the
-# JSON's display_name field, and (2) domains 5-6 silently showed different
-# label text here than in the PDF for the exact same feature. Importing the
-# one complete map from feature_mappings.py fixes both at once.
+# Single source of truth for every feature's human-readable display name.
+# This used to also be shared with pdf_generator.py, but PDF generation has
+# been discarded -- the JSON output of generate_full_profile() is now the
+# sole presentation contract, consumed directly by the frontend. Kept this
+# map here (rather than inlining labels per-domain again) because a single
+# shared source of truth is still correct even with only one consumer.
 try:
     from models.feature_mappings import FEATURE_TRANSLATION_MAP
 except ImportError:
@@ -524,7 +521,15 @@ def evaluate_domain5_burnout(raw_payload):
     meta_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain5_burnout_metadata.json")
     
     if not os.path.exists(model_path) or not os.path.exists(meta_path):
-        return {"domain": "domain_5_occupational_burnout", "placement": {"burnout_index": 5.0}, "top_contributors": []}
+        # No real metadata available -- explicitly state tier_thresholds as
+        # None rather than omitting the key or inventing placeholder numbers,
+        # so a frontend can distinguish "model unavailable" from "model ran,
+        # here are its real thresholds."
+        return {
+            "domain": "domain_5_occupational_burnout",
+            "placement": {"burnout_index": 5.0, "burnout_tier_label": "Unavailable", "tier_thresholds": None},
+            "top_contributors": []
+        }
         
     with open(meta_path, "r") as f:
         metadata = json.load(f)
@@ -586,7 +591,16 @@ def evaluate_domain5_burnout(raw_payload):
         "domain": "domain_5_occupational_burnout",
         "placement": {
             "burnout_index": round(pred_score, 3),
-            "burnout_tier_label": lvl
+            "burnout_tier_label": lvl,
+            # Real, already-loaded tier boundaries from this model's own
+            # metadata -- not invented display bounds. XGBoost regression
+            # output has no natural 0-1 or 0-10 range, so without these a
+            # frontend has no honest way to size a bar/gauge for this value.
+            "tier_thresholds": {
+                "low_to_moderate": thresholds["low_to_moderate"],
+                "moderate_to_high": thresholds["moderate_to_high"],
+                "high_to_severe": thresholds["high_to_severe"]
+            }
         },
         "top_contributors": sorted(contributors, key=lambda x: x["contribution"], reverse=True)[:3]
     }
