@@ -90,6 +90,29 @@ def assess():
             return jsonify({'error': 'No data provided'}), 400
         debug_print(f"✅ Received {len(data)} fields", "SUCCESS")
 
+        # --- NEW: Save response to tests/responses.csv and append to tests/all_responses.csv ---
+        debug_print("💾 Step 1.5: Saving response to tests/", "INFO")
+        responses_path = os.path.join(PROJECT_ROOT, "tests", "responses.csv")
+        all_responses_path = os.path.join(PROJECT_ROOT, "tests", "all_responses.csv")
+        os.makedirs(os.path.dirname(responses_path), exist_ok=True)
+
+        fieldnames = list(data.keys())
+        # Write to responses.csv (overwrite)
+        with open(responses_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerow(data)
+        debug_print(f"✅ Overwrote {responses_path} with new response", "SUCCESS")
+
+        # Append to all_responses.csv
+        file_exists = os.path.isfile(all_responses_path)
+        with open(all_responses_path, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(data)
+        debug_print(f"✅ Appended to {all_responses_path}", "SUCCESS")
+
         # Step 2: Create temporary CSV
         debug_print("📝 Step 2: Creating temporary CSV", "INFO")
         df = pd.DataFrame([data])
@@ -215,7 +238,7 @@ def assess():
         # Step 7: Prepare response
         debug_print("📤 Step 7: Preparing response", "INFO")
         summary = {
-            'domains_processed': len(compiled_profile.get('domains', {})),
+            'domains_processed': len(compiled_profile.get('domain_scores', {})),
             'profile_version': compiled_profile.get('version', 'unknown'),
             'timestamp': timestamp
         }

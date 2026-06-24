@@ -173,6 +173,17 @@ def run_evaluation_pipeline(custom_csv_path=None):
         print(f"❌ RECOVERY FAULT: Processing ledger failed: {str(e)}")
         sys.exit(1)
 
+    # --- NEW: Append the current response to tests/all_responses.csv ---
+    all_responses_path = os.path.join(PROJECT_ROOT, "tests", "all_responses.csv")
+    fieldnames = list(raw_payload.keys())
+    file_exists = os.path.isfile(all_responses_path)
+    with open(all_responses_path, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(raw_payload)
+    print(f"  ├── Appended response to {all_responses_path}")
+
     sanitized_payload = {}
     for column_id, string_value in raw_payload.items():
         val_stripped = string_value.strip() if string_value else ""
