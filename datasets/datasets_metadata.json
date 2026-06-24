@@ -1759,10 +1759,10 @@
             "column_names": [
                 "Disease",
                 "unwanted_thoughts",
-                "repetitve_behaviors",
+                "repetitive_behaviors",
                 "overthinking",
                 "mind_going_blank",
-                "avoidance_of_social_activity",
+                "avoidance_social_activity",
                 "panic",
                 "hypervigilance",
                 "sleep_disturbances",
@@ -1771,10 +1771,10 @@
             "data_types": {
                 "Disease": "object",
                 "unwanted_thoughts": "int64",
-                "repetitve_behaviors": "int64",
+                "repetitive_behaviors": "int64",
                 "overthinking": "int64",
                 "mind_going_blank": "int64",
-                "avoidance_of_social_activity": "int64",
+                "avoidance_social_activity": "int64",
                 "panic": "int64",
                 "hypervigilance": "int64",
                 "sleep_disturbances": "int64",
@@ -1783,10 +1783,10 @@
             "missing_values_count": {
                 "Disease": 0,
                 "unwanted_thoughts": 0,
-                "repetitve_behaviors": 0,
+                "repetitive_behaviors": 0,
                 "overthinking": 0,
                 "mind_going_blank": 0,
-                "avoidance_of_social_activity": 0,
+                "avoidance_social_activity": 0,
                 "panic": 0,
                 "hypervigilance": 0,
                 "sleep_disturbances": 0,
@@ -1795,10 +1795,10 @@
             "missing_values_percent": {
                 "Disease": 0.0,
                 "unwanted_thoughts": 0.0,
-                "repetitve_behaviors": 0.0,
+                "repetitive_behaviors": 0.0,
                 "overthinking": 0.0,
                 "mind_going_blank": 0.0,
-                "avoidance_of_social_activity": 0.0,
+                "avoidance_social_activity": 0.0,
                 "panic": 0.0,
                 "hypervigilance": 0.0,
                 "sleep_disturbances": 0.0,
@@ -1815,7 +1815,7 @@
                     "75%": 0.0,
                     "max": 1.0
                 },
-                "repetitve_behaviors": {
+                "repetitive_behaviors": {
                     "count": 8304.0,
                     "mean": 0.03684971098265896,
                     "std": 0.18840404549740003,
@@ -1845,7 +1845,7 @@
                     "75%": 0.0,
                     "max": 1.0
                 },
-                "avoidance_of_social_activity": {
+                "avoidance_social_activity": {
                     "count": 8304.0,
                     "mean": 0.03877649325626204,
                     "std": 0.193073472834824,

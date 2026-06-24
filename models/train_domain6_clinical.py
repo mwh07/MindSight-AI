@@ -21,10 +21,10 @@ def generate_high_fidelity_reference_cohort(n_samples=5000):
     # Simulate a latent clinical breakdown: 80% baseline control, 20% severe distress
     latent_clinical_status = np.random.choice([0, 1], size=n_samples, p=[0.80, 0.20])
     
-    # Enforce strict layout order matching schema_config.json exactly (e.g., repetitve_behaviors)
+    # Enforce strict layout order matching schema_config.json exactly (e.g., repetitive_behaviors)
     features = [
-        "unwanted_thoughts", "repetitve_behaviors", "overthinking",
-        "mind_going_blank", "avoidance_of_social_activity", "panic", "hypervigilance"
+        "unwanted_thoughts", "repetitive_behaviors", "overthinking",
+        "mind_going_blank", "avoidance_social_activity", "panic", "hypervigilance"
     ]
     
     synthetic_records = []
@@ -65,8 +65,8 @@ def train_clinical_screening_pipeline():
 
     # Strictly align feature tracking layout with schema_config.json
     binary_features = [
-        "unwanted_thoughts", "repetitve_behaviors", "overthinking",
-        "mind_going_blank", "avoidance_of_social_activity", "panic", "hypervigilance"
+        "unwanted_thoughts", "repetitive_behaviors", "overthinking",
+        "mind_going_blank", "avoidance_social_activity", "panic", "hypervigilance"
     ]
 
     # Prioritized path array
@@ -106,8 +106,8 @@ def train_clinical_screening_pipeline():
         
         # Comprehensive column normalizer map to safeguard against variations while mapping to schema
         column_normalization_map = {
-            "repetitive_behaviors": "repetitve_behaviors",
-            "social_withdrawal": "avoidance_of_social_activity",
+            "repetitive_behaviors": "repetitive_behaviors",
+            "social_withdrawal": "avoidance_social_activity",
             "cognitive_blocking": "mind_going_blank",
             "rumination": "overthinking"
         }

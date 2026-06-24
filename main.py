@@ -217,8 +217,8 @@ def run_evaluation_pipeline(custom_csv_path=None):
         'loneliness1', 'loneliness2', 'loneliness3', 'loneliness4', 'loneliness5', 'loneliness6',
         'work_hours_per_week', 'meetings_per_day', 'work_life_balance_score', 'job_satisfaction_score', 
         'deadline_pressure_score', 'autonomy_score', 'stress_score', 'social_support_score',
-        'unwanted_thoughts', 'repetitve_behaviors', 'overthinking', 'mind_going_blank', 
-        'avoidance_of_social_activity', 'panic', 'hypervigilance'
+        'unwanted_thoughts', 'repetitive_behaviors', 'overthinking', 'mind_going_blank', 
+        'avoidance_social_activity', 'panic', 'hypervigilance'
     ]
     
     file_exists = os.path.isfile(all_responses_path)

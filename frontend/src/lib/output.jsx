@@ -149,7 +149,7 @@ export const output = {
       },
       "top_contributors": [
         {
-          "feature": "avoidance_of_social_activity",
+          "feature": "avoidance_social_activity",
           "display_name": "Social Withdrawal Vectors",
           "contribution": 8.1305,
           "direction": "+"
@@ -161,7 +161,7 @@ export const output = {
           "direction": "+"
         },
         {
-          "feature": "repetitve_behaviors",
+          "feature": "repetitive_behaviors",
           "display_name": "Compulsive Action Patterns",
           "contribution": 7.1883,
           "direction": "+"

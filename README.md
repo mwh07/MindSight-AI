@@ -28,7 +28,7 @@ All datasets live in `datasets/`. Each domain is trained on exactly one source d
 | `nhanes_joined_mood_sleep.csv` | Domain 3 — Mood & Sleep | `DPQ010–DPQ100` (10 PHQ-9 items), `SLQ300` (bedtime), `SLQ310` (wake time) |
 | `internet_phq_loneliness_clean.csv` | Domain 4 — Digital & Social | `age`, `gender`, `IAT1–IAT10` (Internet Addiction Test), `loneliness1–loneliness6` |
 | `tech_burnout_2026_clean.csv` | Domain 5 — Occupational Burnout | `age`, `gender`, `work_hours_per_week`, `meetings_per_day`, `work_life_balance_score`, `job_satisfaction_score`, `deadline_pressure_score`, `autonomy_score`, `stress_score`, `social_support_score` |
-| `ocd_symptoms_clean.csv` | Domain 6 — Severe Clinical Screening | `unwanted_thoughts`, `repetitve_behaviors`, `overthinking`, `mind_going_blank`, `avoidance_of_social_activity`, `panic`, `hypervigilance` (7 binary symptom flags) |
+| `ocd_symptoms_clean.csv` | Domain 6 — Severe Clinical Screening | `unwanted_thoughts`, `repetitive_behaviors`, `overthinking`, `mind_going_blank`, `avoidance_social_activity`, `panic`, `hypervigilance` (7 binary symptom flags) |
 
 Supporting files in `datasets/`:
 - `datasets_metadata.json` / `datasets_metadata.txt` — column ranges, types, and provenance notes for every dataset above (read via `scripts/read_metadata.py`).

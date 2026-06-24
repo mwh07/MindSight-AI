@@ -252,10 +252,10 @@ def run_imp70_assessment():
     
     clinical_items = [
         ("unwanted_thoughts", "Experiencing recurrent, distressing, intrusive thoughts or images."),
-        ("repetitve_behaviors", "Feeling compelled to repeat physical actions or rigid mental rituals."),
+        ("repetitive_behaviors", "Feeling compelled to repeat physical actions or rigid mental rituals."),
         ("overthinking", "Excessive rumination over insignificant daily micro-interactions."),
         ("mind_going_blank", "Cognitive paralysis or loss of memory continuity during stress situations."),
-        ("avoidance_of_social_activity", "Active avoidance of social events, crowds, or public areas out of distress."),
+        ("avoidance_social_activity", "Active avoidance of social events, crowds, or public areas out of distress."),
         ("panic", "Sudden, unprovoked surges of overwhelming physical terror or heart palpitations."),
         ("hypervigilance", "Continuous high-alert monitoring of surroundings to guard against threats.")
     ]
@@ -293,8 +293,8 @@ def run_imp70_assessment():
         'loneliness1', 'loneliness2', 'loneliness3', 'loneliness4', 'loneliness5', 'loneliness6',
         'work_hours_per_week', 'meetings_per_day', 'work_life_balance_score', 'job_satisfaction_score', 
         'deadline_pressure_score', 'autonomy_score', 'stress_score', 'social_support_score',
-        'unwanted_thoughts', 'repetitve_behaviors', 'overthinking', 'mind_going_blank', 
-        'avoidance_of_social_activity', 'panic', 'hypervigilance'
+        'unwanted_thoughts', 'repetitive_behaviors', 'overthinking', 'mind_going_blank', 
+        'avoidance_social_activity', 'panic', 'hypervigilance'
     ]
 
     # Dynamically align formatting if checking the long-term history ledger file matrix

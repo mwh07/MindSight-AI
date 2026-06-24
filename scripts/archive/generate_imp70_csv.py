@@ -135,10 +135,10 @@ def build_imp68_questionnaire_csv():
     # -------------------------------------------------------------
     d6_items = [
         ("unwanted_thoughts", "Experiencing recurrent, distressing, intrusive thoughts or images.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),
-        ("repetitve_behaviors", "Feeling compelled to repeat physical actions or rigid mental rituals.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),
+        ("repetitive_behaviors", "Feeling compelled to repeat physical actions or rigid mental rituals.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),
         ("overthinking", "Excessive rumination over insignificant daily micro-interactions.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),
         ("mind_going_blank", "Cognitive paralysis or loss of memory continuity during stress situations.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),
-        ("avoidance_of_social_activity", "Active avoidance of social events, crowds, or public areas out of distress.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),
+        ("avoidance_social_activity", "Active avoidance of social events, crowds, or public areas out of distress.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),
         ("panic", "Sudden, unprovoked surges of overwhelming physical terror or heart palpitations.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),
         ("hypervigilance", "Continuous high-alert monitoring of surroundings to guard against threats.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),
         ("severe_mood_swings", "Rapid, unprovoked emotional transitions detached from circumstances.", "0-4 Frequency Scale (0=Never, 4=Constant/Severe)", "Standard"),

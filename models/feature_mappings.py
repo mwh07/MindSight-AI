@@ -79,10 +79,10 @@ FEATURE_TRANSLATION_MAP = {
 
     # --- Domain 6: Severe Clinical Screening Matrix ---
     "unwanted_thoughts": "Intrusive Cognitive Distortions",
-    "repetitve_behaviors": "Compulsive Behavioral Patterns",
+    "repetitive_behaviors": "Compulsive Behavioral Patterns",
     "overthinking": "Maladaptive Rumination Cycle",
     "mind_going_blank": "Acute Cognitive Blocking under Stress",
-    "avoidance_of_social_activity": "Active Social Withdrawal / Avoidance",
+    "avoidance_social_activity": "Active Social Withdrawal / Avoidance",
     "panic": "Somatic Panic Sensations",
     "hypervigilance": "Autonomic Hyperarousal & Guardedness"
 }

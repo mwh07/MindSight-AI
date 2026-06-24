@@ -56,10 +56,10 @@
       "dataset_source": "ocd_symptoms_clean.csv",
       "features": [
         "unwanted_thoughts",
-        "repetitve_behaviors",
+        "repetitive_behaviors",
         "overthinking", 
         "mind_going_blank",
-        "avoidance_of_social_activity",
+        "avoidance_social_activity",
         "panic",
         "hypervigilance"
       ]

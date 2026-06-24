@@ -84,10 +84,10 @@ questions_data = [
     
     # Domain 6: Severe Clinical
     {"id": "unwanted_thoughts", "domain": "DOMAIN 6: SEVERE CLINICAL", "text": "Experiencing recurrent, distressing, intrusive thoughts or images.", "type": "binary"},
-    {"id": "repetitve_behaviors", "domain": "DOMAIN 6: SEVERE CLINICAL", "text": "Feeling compelled to repeat physical actions or rigid mental rituals.", "type": "binary"},
+    {"id": "repetitive_behaviors", "domain": "DOMAIN 6: SEVERE CLINICAL", "text": "Feeling compelled to repeat physical actions or rigid mental rituals.", "type": "binary"},
     {"id": "overthinking", "domain": "DOMAIN 6: SEVERE CLINICAL", "text": "Excessive rumination over insignificant daily micro-interactions.", "type": "binary"},
     {"id": "mind_going_blank", "domain": "DOMAIN 6: SEVERE CLINICAL", "text": "Cognitive paralysis or loss of memory continuity during stress situations.", "type": "binary"},
-    {"id": "avoidance_of_social_activity", "domain": "DOMAIN 6: SEVERE CLINICAL", "text": "Active avoidance of social events, crowds, or public areas out of distress.", "type": "binary"},
+    {"id": "avoidance_social_activity", "domain": "DOMAIN 6: SEVERE CLINICAL", "text": "Active avoidance of social events, crowds, or public areas out of distress.", "type": "binary"},
     {"id": "panic", "domain": "DOMAIN 6: SEVERE CLINICAL", "text": "Sudden, unprovoked surges of overwhelming physical terror or heart palpitations.", "type": "binary"},
     {"id": "hypervigilance", "domain": "DOMAIN 6: SEVERE CLINICAL", "text": "Continuous high-alert monitoring of surroundings to guard against threats.", "type": "binary"}
 ]

@@ -105,7 +105,7 @@ def run_refinement_pipeline(source_root_dir):
         },
         "ocd_symptoms": {
             "output_name": "ocd_symptoms_clean.csv",
-            "required_cols": ['Disease', 'unwanted_thoughts', 'repetitve_behaviors', 'overthinking', 'mind_going_blank', 'avoidance_of_social_activity', 'panic', 'hypervigilance', 'sleep_disturbances', 'low_energy']
+            "required_cols": ['Disease', 'unwanted_thoughts', 'repetitive_behaviors', 'overthinking', 'mind_going_blank', 'avoidance_social_activity', 'panic', 'hypervigilance', 'sleep_disturbances', 'low_energy']
         },
         "digital_addiction": {
             "output_name": "digital_addiction_mendeley_clean.csv",
