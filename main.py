@@ -175,11 +175,25 @@ def run_evaluation_pipeline(custom_csv_path=None):
 
     # --- NEW: Append the current response to tests/all_responses.csv ---
     all_responses_path = os.path.join(PROJECT_ROOT, "tests", "all_responses.csv")
-    fieldnames = list(raw_payload.keys())
+    
+    ordered_headers = [
+        'age', 'gender',
+        'EXT1', 'EXT2', 'EXT3', 'EST1', 'EST2', 'EST3', 'AGR1', 'AGR2', 'AGR3', 'CSN1', 'CSN2', 'CSN3', 'OPN1', 'OPN2', 'OPN3',
+        'Q1', 'Q2', 'Q3', 'Q4', 'Q5', 'Q6', 'Q7', 'Q8', 'Q9', 'Q10',
+        'DPQ010', 'DPQ020', 'DPQ030', 'DPQ040', 'DPQ050', 'DPQ060', 'DPQ070', 'DPQ080', 'DPQ090', 'DPQ100',
+        'SLQ300', 'SLQ310',
+        'IAT1', 'IAT2', 'IAT3', 'IAT4', 'IAT5', 'IAT6', 'IAT7', 'IAT8', 'IAT9', 'IAT10',
+        'loneliness1', 'loneliness2', 'loneliness3', 'loneliness4', 'loneliness5', 'loneliness6',
+        'work_hours_per_week', 'meetings_per_day', 'work_life_balance_score', 'job_satisfaction_score', 
+        'deadline_pressure_score', 'autonomy_score', 'stress_score', 'social_support_score',
+        'unwanted_thoughts', 'repetitve_behaviors', 'overthinking', 'mind_going_blank', 
+        'avoidance_of_social_activity', 'panic', 'hypervigilance'
+    ]
+    
     file_exists = os.path.isfile(all_responses_path)
     with open(all_responses_path, 'a', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        if not file_exists:
+        writer = csv.DictWriter(f, fieldnames=ordered_headers, extrasaction='ignore', restval=0)
+        if not file_exists or os.stat(all_responses_path).st_size == 0:
             writer.writeheader()
         writer.writerow(raw_payload)
     print(f"  ├── Appended response to {all_responses_path}")
