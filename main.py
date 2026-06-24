@@ -70,13 +70,31 @@ def flush_directory_contents(target_dir, label="Directory"):
             print(f"  │ ⚠️ Failed to purge item {item}: {str(e)}")
 
 def are_models_trained():
-    """Evaluates whether models are trained or if only '.gitkeep' exists."""
+    """Evaluates whether models are trained and validates against .schema_hash."""
     saved_states_dir = os.path.join(PROJECT_ROOT, "models", "saved_states")
     if not os.path.exists(saved_states_dir):
         os.makedirs(saved_states_dir, exist_ok=True)
         return False
     items = os.listdir(saved_states_dir)
-    return len([item for item in items if item != ".gitkeep"]) > 0
+    if len([item for item in items if item != ".gitkeep"]) == 0:
+        return False
+        
+    try:
+        import hashlib
+        schema_path = os.path.join(PROJECT_ROOT, "schema_config.json")
+        hash_path = os.path.join(PROJECT_ROOT, "models", ".schema_hash")
+        with open(schema_path, "rb") as f:
+            current_hash = hashlib.md5(f.read()).hexdigest()
+        if not os.path.exists(hash_path):
+            return False
+        with open(hash_path, "r") as f:
+            saved_hash = f.read().strip()
+        if current_hash != saved_hash:
+            return False
+    except Exception:
+        pass
+        
+    return True
 
 def execute_training_submodule(script_relative_path, step_description):
     """Executes an individual domain training script as an isolated subprocess."""
@@ -138,6 +156,19 @@ def run_standalone_training_suite():
         if not execute_training_submodule(script_path, description):
             print(f"\n❌ Build failed during processing of {description}.")
             sys.exit(1)
+            
+    try:
+        import hashlib
+        schema_path = os.path.join(PROJECT_ROOT, "schema_config.json")
+        hash_path = os.path.join(PROJECT_ROOT, "models", ".schema_hash")
+        with open(schema_path, "rb") as f:
+            current_hash = hashlib.md5(f.read()).hexdigest()
+        with open(hash_path, "w") as f:
+            f.write(current_hash)
+        print(f"🔒 Schema hash updated to {current_hash}")
+    except Exception as e:
+        print(f"⚠️ Failed to update schema hash: {e}")
+        
     print("🎉 All 6 structural domains calibrated successfully.")
 
 def run_evaluation_pipeline(custom_csv_path=None):

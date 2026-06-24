@@ -55,7 +55,20 @@ def health():
     models_trained = False
     if os.path.exists(saved_states_dir):
         items = os.listdir(saved_states_dir)
-        models_trained = len([item for item in items if item != ".gitkeep"]) > 0
+        if len([item for item in items if item != ".gitkeep"]) > 0:
+            try:
+                import hashlib
+                schema_path = os.path.join(PROJECT_ROOT, "schema_config.json")
+                hash_path = os.path.join(PROJECT_ROOT, "models", ".schema_hash")
+                with open(schema_path, "rb") as f:
+                    current_hash = hashlib.md5(f.read()).hexdigest()
+                if os.path.exists(hash_path):
+                    with open(hash_path, "r") as f:
+                        saved_hash = f.read().strip()
+                    if current_hash == saved_hash:
+                        models_trained = True
+            except Exception:
+                pass
     
     return jsonify({
         'status': 'healthy',
