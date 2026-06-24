@@ -601,7 +601,9 @@ export default function Dashboard() {
                           <Badge variant="outline" className={`text-[10px] uppercase font-bold py-0.5 px-2 bg-background/50 border-primary/10 ${
                             isActive ? "text-primary border-primary/20" : "text-muted-foreground"
                           }`}>
-                            {item.severity}
+                            {item.severity?.toLowerCase() === 'descriptive' 
+                            ? item.severity
+                            : `RISK : ${item.severity}`}
                           </Badge>
                         )}
                       </div>
