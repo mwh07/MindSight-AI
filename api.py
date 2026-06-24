@@ -196,7 +196,7 @@ def assess():
             except ValueError:
                 sanitized_payload[column_id] = val_stripped
         debug_print(f"✅ Payload sanitized with {len(sanitized_payload)} fields", "SUCCESS")
-                try:
+        try:
             from models.profile_aggregator import generate_full_profile
 
             debug_print("🔮 Running profile generation...", "INFO")
