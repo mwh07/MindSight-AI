@@ -176,13 +176,7 @@ def assess():
             if frontend_key in sanitized_payload:
                 sanitized_payload[backend_key] = sanitized_payload.pop(frontend_key)   
 
-        # Run profile generation
         try:
-            import models.inference_wrappers
-            import models.profile_aggregator
-            import importlib
-            importlib.reload(models.inference_wrappers)
-            importlib.reload(models.profile_aggregator)
             from models.profile_aggregator import generate_full_profile
 
             debug_print("🔮 Running profile generation...", "INFO")

@@ -205,14 +205,6 @@ def run_evaluation_pipeline(custom_csv_path=None):
     os.makedirs(target_output_dir, exist_ok=True)
     
     try:
-        import models.inference_wrappers
-        import models.profile_aggregator
-        # import models.pdf_generator
-        
-        importlib.reload(models.inference_wrappers)
-        importlib.reload(models.profile_aggregator)
-        # importlib.reload(models.pdf_generator)
-        
         from models.profile_aggregator import generate_full_profile
         # from models.pdf_generator import compile_pdf_report
         
