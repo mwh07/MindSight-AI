@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-MINDSIGHT Domain 5 Calibration Engine (v2.8 - Standardized)
+MINDSIGHT Domain 5 Calibration Engine (v2.9 - Standardized)
 Trains an XGBoost Regressor to predict continuous occupational burnout scores
-and extracts empirical diagnostic cutoffs based on group maximums.
+from work‑related features only (gender is NOT used in runtime inference).
 """
 
 import os
@@ -11,7 +11,6 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, r2_score
 
 def train_burnout_model():
     print("🚀 Commencing Domain 5 XGBoost Regressor Training Pipeline...")
@@ -23,12 +22,12 @@ def train_burnout_model():
     output_model_path = os.path.join(output_dir, "domain5_burnout.json")
     output_meta_path = os.path.join(output_dir, "domain5_burnout_metadata.json")
     
+    # Schema features used at runtime (gender is NOT used)
     schema_features = [
-        "age", "work_hours_per_week", "meetings_per_day", 
+        "work_hours_per_week", "meetings_per_day", 
         "work_life_balance_score", "job_satisfaction_score", 
         "deadline_pressure_score", "autonomy_score", "stress_score", "social_support_score"
     ]
-    expected_genders = ["Male", "Female", "Non-binary", "Prefer not to say"]
     
     df = None
     if os.path.exists(data_path):
@@ -44,25 +43,20 @@ def train_burnout_model():
         np.random.seed(42)
         row_count = 1000
         df = pd.DataFrame({f: np.random.uniform(1, 10, row_count) for f in schema_features})
-        df["gender"] = np.random.choice(expected_genders, row_count)
         df["burnout_score"] = df["stress_score"] * 0.6 + np.random.normal(0, 1, row_count)
         df["burnout_level"] = pd.cut(df["burnout_score"], bins=4, labels=["Low", "Moderate", "High", "Severe"])
 
     target_score_col = "burnout_score"
     target_level_col = "burnout_level"
     
-    # Process numeric features
+    # Ensure all required columns exist and are numeric
     for col in schema_features:
+        if col not in df.columns:
+            df[col] = np.random.uniform(1, 10, len(df))
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(df[col].median() if not df.empty else 5.0)
     
-    # Consistent One-Hot Encoding
-    df["gender"] = df["gender"].fillna("Prefer not to say").astype(str)
-    for gen in expected_genders:
-        df[f"gender_{gen}"] = (df["gender"].str.lower() == gen.lower()).astype(int)
-        
-    final_features = schema_features + [f"gender_{gen}" for gen in expected_genders]
-    
-    X = df[final_features]
+    # Use only the schema features (no gender)
+    X = df[schema_features]
     y = pd.to_numeric(df[target_score_col], errors='coerce').fillna(df[target_score_col].median() if not df.empty else 5.0)
     
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.15, random_state=42)
@@ -80,7 +74,7 @@ def train_burnout_model():
     print("  │ Training Gradient Boosted Regression Trees...")
     model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
     
-    # Threshold extraction with enforced ordering to prevent logic inversions
+    # Threshold extraction using empirical group maxes
     print("  │ Calibrating empirical score-to-level thresholds...")
     max_scores = df.groupby(target_level_col)[target_score_col].max().reindex(["Low", "Moderate", "High", "Severe"])
     
@@ -92,13 +86,12 @@ def train_burnout_model():
     
     model.get_booster().save_model(output_model_path)
     
-    # Export Metadata Verification Contract
+    # Metadata contract
     metadata = {
-        "schema_version": "2.6",
+        "schema_version": "2.9",
         "domain": "domain_5_occupational_burnout",
-        "features": final_features,
-        "thresholds": thresholds,
-        "gender_categories": expected_genders
+        "features": schema_features,   # gender removed
+        "thresholds": thresholds
     }
     with open(output_meta_path, 'w') as f:
         json.dump(metadata, f, indent=2)

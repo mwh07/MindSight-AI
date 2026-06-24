@@ -1,0 +1,251 @@
+{
+  "schema_version": "4.0",
+  "id_no": "MS-20260624_120009-ANONYMOUS",
+  "age": 21,
+  "sex": "Male",
+  "domain_scores": {
+    "domain_1_personality": {
+      "domain": "domain_1_personality",
+      "placement": {
+        "extraversion": 0.1,
+        "emotional_stability": -1.6,
+        "agreeableness": 1.6,
+        "conscientiousness": 1.6,
+        "openness": 1.6
+      },
+      "top_contributors": [
+        {
+          "feature": "Emotional_Stability",
+          "display_name": "Emotional_Stability Vector",
+          "contribution": 1.6,
+          "direction": "-",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Agreeableness",
+          "display_name": "Agreeableness Vector",
+          "contribution": 1.6,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Conscientiousness",
+          "display_name": "Conscientiousness Vector",
+          "contribution": 1.6,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        }
+      ],
+      "severity_tier": "descriptive",
+      "domain_summary": "Most shaped by emotional_stability and agreeableness.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": -4.0,
+        "max": 4.0
+      }
+    },
+    "domain_2_self_esteem": {
+      "domain": "domain_2_self_esteem",
+      "placement": {
+        "score": 39,
+        "max_possible_score": 40,
+        "classification": "High Self-Esteem"
+      },
+      "top_contributors": [
+        {
+          "feature": "Q1",
+          "display_name": "General Self-Worth",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Q2",
+          "display_name": "Acknowledgment of Personal Strengths",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Q3",
+          "display_name": "Inclination to Feel Like a Failure",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        }
+      ],
+      "severity_tier": "low",
+      "domain_summary": "Self-esteem (high self-esteem) was most influenced by general self-worth and acknowledgment of personal strengths.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": 0,
+        "max": 40
+      }
+    },
+    "domain_3_mood_sleep": {
+      "domain": "domain_3_mood_sleep",
+      "placement": {
+        "phq9_sum": 3,
+        "severity_label": "Minimal or Baseline Profile",
+        "calculated_sleep_duration_hours": 8.5
+      },
+      "top_contributors": [
+        {
+          "feature": "PHQ_Core",
+          "display_name": "Symptom Burden Summation",
+          "contribution": 3.0,
+          "direction": "+",
+          "relative_magnitude": 75.0
+        },
+        {
+          "feature": "Sleep_Duration",
+          "display_name": "Calculated Sleep Duration",
+          "contribution": 1.0,
+          "direction": "+",
+          "relative_magnitude": 25.0
+        }
+      ],
+      "severity_tier": "low",
+      "domain_summary": "Minimal or Baseline Profile mood signal, driven mainly by symptom burden summation and calculated sleep duration.",
+      "scale_reference": {
+        "phq9_sum": {
+          "type": "fixed_range",
+          "min": 0,
+          "max": 27
+        },
+        "sleep_duration_hours": {
+          "type": "reference_band",
+          "low": 7.0,
+          "high": 9.0
+        }
+      }
+    },
+    "domain_4_digital_and_social": {
+      "domain": "domain_4_digital_and_social",
+      "placement": {
+        "predicted_total_internet_addiction": 37.613,
+        "predicted_total_loneliness": 44.758,
+        "loneliness_score": 44.758,
+        "classification": "Baseline Cohort Profile",
+        "data_source": "model_prediction"
+      },
+      "top_contributors": [
+        {
+          "feature": "IAT2",
+          "display_name": "Neglect of Domestic Duties for Internet",
+          "contribution": 4.7215,
+          "direction": "+",
+          "relative_magnitude": 44.7
+        },
+        {
+          "feature": "IAT9",
+          "display_name": "Use of Internet as Emotional Escapism",
+          "contribution": 2.9856,
+          "direction": "+",
+          "relative_magnitude": 28.3
+        },
+        {
+          "feature": "IAT6",
+          "display_name": "Academic or Work Output Decline",
+          "contribution": 2.851,
+          "direction": "+",
+          "relative_magnitude": 27.0
+        }
+      ],
+      "severity_tier": "moderate",
+      "domain_summary": "Loneliness and digital-use signals were most influenced by neglect of domestic duties for internet and use of internet as emotional escapism.",
+      "scale_reference": {
+        "predicted_total_internet_addiction": null,
+        "predicted_total_loneliness": null,
+        "loneliness_score": null
+      }
+    },
+    "domain_5_occupational_burnout": {
+      "domain": "domain_5_occupational_burnout",
+      "placement": {
+        "burnout_index": 8.154,
+        "burnout_tier_label": "Severe Burnout Indication",
+        "tier_thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
+      },
+      "top_contributors": [
+        {
+          "feature": "work_hours_per_week",
+          "display_name": "Weekly Professional Output Hours",
+          "contribution": 1.0828,
+          "direction": "+",
+          "relative_magnitude": 39.9
+        },
+        {
+          "feature": "work_life_balance_score",
+          "display_name": "Subjective Work-Life Equilibrium",
+          "contribution": 0.8263,
+          "direction": "+",
+          "relative_magnitude": 30.5
+        },
+        {
+          "feature": "meetings_per_day",
+          "display_name": "Daily Meeting & Communication Load",
+          "contribution": 0.8014,
+          "direction": "+",
+          "relative_magnitude": 29.6
+        }
+      ],
+      "severity_tier": "severe",
+      "domain_summary": "Severe Burnout Indication, driven mainly by weekly professional output hours and subjective work-life equilibrium.",
+      "scale_reference": {
+        "type": "tier_thresholds",
+        "thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
+      }
+    },
+    "domain_6_severe_clinical": {
+      "domain": "domain_6_severe_clinical",
+      "placement": {
+        "predicted_condition_code": 1,
+        "predicted_condition_label": "Mild Symptomatic Profile",
+        "anomaly_review_flag": true
+      },
+      "top_contributors": [
+        {
+          "feature": "overthinking",
+          "display_name": "Maladaptive Rumination Cycle",
+          "contribution": 7.316,
+          "direction": "+",
+          "relative_magnitude": 33.5
+        },
+        {
+          "feature": "mind_going_blank",
+          "display_name": "Acute Cognitive Blocking under Stress",
+          "contribution": 7.3143,
+          "direction": "+",
+          "relative_magnitude": 33.5
+        },
+        {
+          "feature": "repetitve_behaviors",
+          "display_name": "Compulsive Behavioral Patterns",
+          "contribution": 7.1883,
+          "direction": "+",
+          "relative_magnitude": 32.9
+        }
+      ],
+      "severity_tier": "severe",
+      "domain_summary": "Mild Symptomatic Profile, most associated with maladaptive rumination cycle and acute cognitive blocking under stress. An atypical response pattern was also flagged for review.",
+      "scale_reference": null
+    }
+  },
+  "global_synthesis": "COMPLEX PROFILE EVALUATION: Unsupervised screening models flag an atypical response configuration. While tracking markers align closely with the Mild Symptomatic Profile, the overall structure falls outside standard baseline distributions concurrently with elevated clinical metrics (PHQ-9 Sum: 3). A comprehensive professional differential evaluation is recommended to reconcile these mixed indicators.",
+  "plain_language_summary": {
+    "opening": "This assessment surfaced some signals worth taking seriously, particularly on the clinical screening section, where responses point toward a mild symptomatic profile.",
+    "domain_recap": "Across the six areas measured, their emotional stability stands out as notably lower than their other traits; self-esteem scored 39 out of 40 (high self-esteem); a PHQ-9 mood screening score of 3 (minimal or baseline profile), with about 8.5 hours of sleep; moderate loneliness signals alongside an internet-use pattern score of 38; and a severe burnout indication (index 8.2) in their work life.",
+    "closing": "Given these clinical screening results, we'd strongly encourage speaking with a mental health professional -- a doctor, therapist, or counselor -- for a proper evaluation. This summary is based on self-reported questionnaire patterns and is not a diagnosis.",
+    "recommend_professional_help": true,
+    "full_text": "This assessment surfaced some signals worth taking seriously, particularly on the clinical screening section, where responses point toward a mild symptomatic profile. Across the six areas measured, their emotional stability stands out as notably lower than their other traits; self-esteem scored 39 out of 40 (high self-esteem); a PHQ-9 mood screening score of 3 (minimal or baseline profile), with about 8.5 hours of sleep; moderate loneliness signals alongside an internet-use pattern score of 38; and a severe burnout indication (index 8.2) in their work life. Given these clinical screening results, we'd strongly encourage speaking with a mental health professional -- a doctor, therapist, or counselor -- for a proper evaluation. This summary is based on self-reported questionnaire patterns and is not a diagnosis."
+  }
+}

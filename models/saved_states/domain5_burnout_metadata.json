@@ -1,8 +1,7 @@
 {
-  "schema_version": "2.6",
+  "schema_version": "2.9",
   "domain": "domain_5_occupational_burnout",
   "features": [
-    "age",
     "work_hours_per_week",
     "meetings_per_day",
     "work_life_balance_score",
@@ -10,21 +9,11 @@
     "deadline_pressure_score",
     "autonomy_score",
     "stress_score",
-    "social_support_score",
-    "gender_Male",
-    "gender_Female",
-    "gender_Non-binary",
-    "gender_Prefer not to say"
+    "social_support_score"
   ],
   "thresholds": {
     "low_to_moderate": 3.5,
     "moderate_to_high": 5.5,
     "high_to_severe": 7.0
-  },
-  "gender_categories": [
-    "Male",
-    "Female",
-    "Non-binary",
-    "Prefer not to say"
-  ]
+  }
 }

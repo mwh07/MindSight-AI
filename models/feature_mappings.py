@@ -24,16 +24,16 @@ FEATURE_TRANSLATION_MAP = {
     "OPN3": "Intellectual Curiosity & Deep Insight",
 
     # --- Domain 2: Rosenberg Self-Esteem (RSE) ---
-    "Q1": "General Self-Satisfaction",
-    "Q2": "Feelings of Devaluation or Inadequacy",
-    "Q3": "Recognition of Personal Strengths",
+    "Q1": "General Self-Worth",
+    "Q2": "Acknowledgment of Personal Strengths",
+    "Q3": "Inclination to Feel Like a Failure",
     "Q4": "Perceived Competence Relative to Peers",
-    "Q5": "Sense of Self-Pride",
-    "Q6": "Feelings of Uselessness or Low Utility",
-    "Q7": "Self-Worth Equivalence to Others",
+    "Q5": "Lack of Self-Pride",
+    "Q6": "Positive Self-Attitude",
+    "Q7": "Overall Self-Satisfaction",
     "Q8": "Deficit in Self-Respect",
-    "Q9": "Inclination to Feel Like a Failure",
-    "Q10": "Positive Attitude Toward Self",
+    "Q9": "Feelings of Uselessness",
+    "Q10": "Negative Self-Evaluation",
 
     # --- Domain 3: Mood (PHQ-9) & Sleep Inventories ---
     "DPQ010": "Anhedonia / Lack of Pleasure in Activities",

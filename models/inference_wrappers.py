@@ -187,24 +187,23 @@ def evaluate_domain1_personality(raw_payload):
 def evaluate_domain2_self_esteem(raw_payload):
     """
     Processes the Rosenberg Self-Esteem (RSE) Scale across a 0-40 maximum score boundary.
-    FIX: Realigns input key routing to check for 'Q1'-'Q10' before falling back to 'RSE1'-'RSE10',
-         and corrects reverse-scoring to map to the verified 0-4 numeric range.
+    Converts raw 1-5 Likert to 0-4 scale, applies reverse-scoring to items 3,5,8,9,10.
     """
     reverse_scoring_items = [3, 5, 8, 9, 10]
     total_score = 0
     item_contributions = []
     
     for i in range(1, 11):
-        # Dynamically support both 'Q1' style and 'RSE1' style payload signatures
         raw_val = raw_payload.get(f"Q{i}", raw_payload.get(f"RSE{i}", 2.0))
         try:
             val = int(float(raw_val))
-            val = max(0, min(4, val))  # Strict scale boundaries [0, 4]
+            val = val - 1                    # 1→0, 2→1, ... 5→4
+            val = max(0, min(4, val))        # clamp
         except (ValueError, TypeError):
             val = 2
             
         if i in reverse_scoring_items:
-            processed_val = 4 - val  # Reverse score on a 0-4 point scale
+            processed_val = 4 - val
         else:
             processed_val = val
             
