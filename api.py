@@ -21,11 +21,8 @@ if PROJECT_ROOT not in sys.path:
 
 app = Flask(__name__)
 
-# Enable CORS for all routes and all origins
-CORS(app)  # This allows all origins by default
-
-# Or if you want more specific configuration:
-# CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173'])
+# Enable CORS for specific origins to prevent CSRF and external API abuse
+CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173'])
 
 DEBUG = True
 
