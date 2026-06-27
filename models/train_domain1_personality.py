@@ -3,6 +3,7 @@
 MINDSIGHT Domain 1 Calibration Engine (v2.8 - Standardized)
 Performs authentic Marginal Maximum Likelihood (MML) estimation 
 for Graded Response Model (GRM-IRT) personality trait vectors.
+ADDED: Item fit statistics (correlation, mean log-likelihood) on the full dataset.
 """
 
 import os
@@ -11,6 +12,7 @@ import json
 import pickle
 import numpy as np
 import pandas as pd
+from scipy.stats import pearsonr
 
 try:
     from girth import grm_mml
@@ -42,6 +44,30 @@ def simulate_authentic_grm_data(n_persons=1000, n_items=3, n_categories=5):
             
     return responses
 
+def compute_theta_for_respondent(response_vector, item_params, grid=None):
+    """
+    Computes the maximum likelihood estimate of theta for a single respondent.
+    """
+    if grid is None:
+        grid = np.linspace(-4.0, 4.0, 81)
+    log_lik = np.zeros_like(grid)
+    for idx, theta_val in enumerate(grid):
+        total_ll = 0.0
+        for item_id, params in item_params.items():
+            raw_val = response_vector.get(item_id, 3.0)
+            resp = int(np.clip(round(raw_val), 1, 5))
+            a = float(params.get("a", 1.0))
+            b = np.array(params.get("b", [-1.5, -0.5, 0.5, 1.5]))
+            # Compute P* for each threshold
+            p_star = 1.0 / (1.0 + np.exp(-a * (theta_val - b)))
+            # Anchor boundaries: P*(0)=1, P*(5)=0
+            p_star_full = np.concatenate([[1.0], p_star, [0.0]])
+            p_cat = p_star_full[resp - 1] - p_star_full[resp]
+            total_ll += np.log(max(p_cat, 1e-9))
+        log_lik[idx] = total_ll
+    best_idx = np.argmax(log_lik)
+    return grid[best_idx]
+
 def calibrate_personality_space():
     print("[RUNNING] Commencing true psychometric GRM-IRT Calibration...")
     
@@ -62,6 +88,9 @@ def calibrate_personality_space():
         print(f"  │ [WARNING] Dataset path {dataset_path} not found.")
 
     use_synthetic_fallback = df is None
+
+    # We'll store item fit metrics
+    item_fit_metrics = {}
 
     for trait in traits:
         print(f"  │ Processing Trait: {trait}...")
@@ -90,7 +119,11 @@ def calibrate_personality_space():
             trait_cols = [f"{trait}1", f"{trait}2", f"{trait}3"]
             all_processed_features.extend(trait_cols)
             matrix = simulate_authentic_grm_data(n_persons=1000, n_items=3, n_categories=5)
-        
+            # For synthetic, we can create a dummy df for later correlation
+            if df is None:
+                df_synth = pd.DataFrame(matrix.T, columns=trait_cols)
+                df = df_synth  # but we need full data; we'll handle later
+
         # Execute Marginal Maximum Likelihood Estimation with hard-seeded convergence fallbacks
         if grm_mml is not None and not use_synthetic_fallback:
             try:
@@ -110,12 +143,55 @@ def calibrate_personality_space():
             beta_matrices = np.sort(np.random.uniform(-1.6, 1.6, (matrix.shape[0], 4)), axis=1)
             
         grm_registry[trait] = {"items": {}}
+        item_params = {}
         for idx in range(matrix.shape[0]):
             item_name = trait_cols[idx]
             grm_registry[trait]["items"][item_name] = {
                 "alpha": float(alpha_vectors[idx]),
                 "beta": [float(b) for b in beta_matrices[idx]]
             }
+            item_params[item_name] = {
+                "a": float(alpha_vectors[idx]),
+                "b": beta_matrices[idx].tolist()
+            }
+
+        # --- Compute item fit metrics on the full dataset ---
+        # We need the raw responses for this trait from the full dataset (df)
+        # Get the response matrix (original 1-5 scale)
+        if df is not None:
+            # Extract the raw responses for the trait columns
+            raw_responses = df[trait_cols].dropna()
+            if len(raw_responses) > 0:
+                # Compute theta for each respondent
+                thetas = []
+                for _, row in raw_responses.iterrows():
+                    resp_dict = {col: row[col] for col in trait_cols}
+                    theta = compute_theta_for_respondent(resp_dict, item_params)
+                    thetas.append(theta)
+                thetas = np.array(thetas)
+                # For each item, compute correlation and mean log-likelihood
+                item_metrics = {}
+                for col in trait_cols:
+                    raw_vals = raw_responses[col].values
+                    # Correlation between raw response and theta (valid if theta is continuous)
+                    corr, _ = pearsonr(raw_vals, thetas)
+                    # Mean log-likelihood: for each respondent, compute log probability of observed response given theta
+                    log_lik_list = []
+                    for idx2, theta_val in enumerate(thetas):
+                        resp = int(np.clip(round(raw_vals[idx2]), 1, 5))
+                        a = item_params[col]["a"]
+                        b = np.array(item_params[col]["b"])
+                        p_star = 1.0 / (1.0 + np.exp(-a * (theta_val - b)))
+                        p_star_full = np.concatenate([[1.0], p_star, [0.0]])
+                        p_cat = p_star_full[resp - 1] - p_star_full[resp]
+                        log_lik_list.append(np.log(max(p_cat, 1e-9)))
+                    mean_ll = np.mean(log_lik_list)
+                    item_metrics[col] = {"correlation": round(corr, 4), "mean_log_likelihood": round(mean_ll, 4)}
+                item_fit_metrics[trait.lower()] = item_metrics
+            else:
+                item_fit_metrics[trait.lower()] = {"note": "No valid responses for item fit"}
+        else:
+            item_fit_metrics[trait.lower()] = {"note": "No dataset available for item fit"}
 
     output_dir = "models/saved_states"
     os.makedirs(output_dir, exist_ok=True)
@@ -139,6 +215,19 @@ def calibrate_personality_space():
     with open(output_meta_path, "w") as f:
         json.dump(metadata, f, indent=2)
     print(f"[SUCCESS] Domain 1 metadata verification layout exported to -> {output_meta_path}\n")
+
+    # --- Save evaluation metrics ---
+    eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")
+    # Load existing metrics if any
+    if os.path.exists(eval_metrics_path):
+        with open(eval_metrics_path, "r") as f:
+            all_metrics = json.load(f)
+    else:
+        all_metrics = {}
+    all_metrics["domain_1_personality"] = item_fit_metrics
+    with open(eval_metrics_path, "w") as f:
+        json.dump(all_metrics, f, indent=2)
+    print(f"[SUCCESS] Evaluation metrics saved to -> {eval_metrics_path}")
 
 if __name__ == "__main__":
     calibrate_personality_space()

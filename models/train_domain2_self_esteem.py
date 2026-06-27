@@ -5,6 +5,7 @@ Processes empirical Rosenberg Self-Esteem Scale (Q1-Q10) datasets,
 stratifies responses into demographic cohorts, and exports empirical
 percentile lookup tables for normative runtime evaluations.
 Aligns with frontend (reverse items [3,5,8,9,10]) and 0-4 scale.
+ADDED: Evaluation metrics note (deterministic, no ML).
 """
 
 import os
@@ -147,6 +148,22 @@ def calibrate_self_esteem_norms():
     print(f"[SUCCESS] Normative cohort percentile matrices successfully serialized.")
     print(f"    └── Pickle Destination: {pkl_path}")
     print(f"    └── Metadata Contract Destination: {meta_path}\n")
+
+    # --- Save evaluation metrics (deterministic) ---
+    eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")
+    domain_metrics = {
+        "metric_type": "N/A - deterministic scoring, no learned parameters",
+        "note": "RSE score is a fixed clinical formula; percentile table is empirical lookup, not a fitted model."
+    }
+    if os.path.exists(eval_metrics_path):
+        with open(eval_metrics_path, "r") as f:
+            all_metrics = json.load(f)
+    else:
+        all_metrics = {}
+    all_metrics["domain_2_self_esteem"] = domain_metrics
+    with open(eval_metrics_path, "w") as f:
+        json.dump(all_metrics, f, indent=2)
+    print(f"[SUCCESS] Evaluation metrics saved to -> {eval_metrics_path}")
 
 if __name__ == "__main__":
     calibrate_self_esteem_norms()

@@ -3,6 +3,7 @@
 MINDSIGHT Domain 5 Calibration Engine (v2.9 - Standardized)
 Trains an XGBoost Regressor to predict continuous occupational burnout scores
 from work‑related features only (gender is NOT used in runtime inference).
+ADDED: Train/test split evaluation (R², RMSE, MAE) with re-fit on full dataset.
 """
 
 import os
@@ -11,6 +12,7 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 def train_burnout_model():
     print("🚀 Commencing Domain 5 XGBoost Regressor Training Pipeline...")
@@ -59,8 +61,30 @@ def train_burnout_model():
     X = df[schema_features]
     y = pd.to_numeric(df[target_score_col], errors='coerce').fillna(df[target_score_col].median() if not df.empty else 5.0)
     
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.15, random_state=42)
-    
+    # --- Evaluation: split data ---
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    print(f"   Train/Test split: {len(X_train)} train, {len(X_test)} test")
+
+    # Train model on train split
+    model_eval = xgb.XGBRegressor(
+        n_estimators=300,
+        learning_rate=0.05,
+        max_depth=6,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42,
+        eval_metric="rmse"
+    )
+    print("  │ Training Gradient Boosted Regression Trees (evaluation split)...")
+    model_eval.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
+    y_pred = model_eval.predict(X_test)
+    r2 = r2_score(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    mae = mean_absolute_error(y_test, y_pred)
+    print(f"     ✅ Test R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}")
+
+    # --- Re-fit on full dataset for production ---
+    print("   Re-fitting on full dataset for production...")
     model = xgb.XGBRegressor(
         n_estimators=300,
         learning_rate=0.05,
@@ -70,9 +94,7 @@ def train_burnout_model():
         random_state=42,
         eval_metric="rmse"
     )
-    
-    print("  │ Training Gradient Boosted Regression Trees...")
-    model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
+    model.fit(X, y, eval_set=[(X, y)], verbose=False)
     
     # Threshold extraction using empirical group maxes
     print("  │ Calibrating empirical score-to-level thresholds...")
@@ -99,6 +121,24 @@ def train_burnout_model():
     print(f"[SUCCESS] Domain 5 model and metadata exported.")
     print(f"   └── Model Path: {output_model_path}")
     print(f"   └── Metadata Path: {output_meta_path}\n")
+
+    # --- Save evaluation metrics ---
+    eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")
+    domain_metrics = {
+        "r2": round(r2, 4),
+        "rmse": round(rmse, 4),
+        "mae": round(mae, 4),
+        "test_set_size": int(len(X_test))
+    }
+    if os.path.exists(eval_metrics_path):
+        with open(eval_metrics_path, "r") as f:
+            all_metrics = json.load(f)
+    else:
+        all_metrics = {}
+    all_metrics["domain_5_occupational_burnout"] = domain_metrics
+    with open(eval_metrics_path, "w") as f:
+        json.dump(all_metrics, f, indent=2)
+    print(f"[SUCCESS] Evaluation metrics saved to -> {eval_metrics_path}")
 
 if __name__ == "__main__":
     train_burnout_model()

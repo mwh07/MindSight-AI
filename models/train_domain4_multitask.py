@@ -3,6 +3,7 @@
 MINDSIGHT Domain 4 Calibration Engine (v2.8 - Standardized)
 Trains independent Random Forest Regressors for Internet Addiction (IAT)
 and Loneliness scales. Outputs unified schemas and clinical severity boundaries.
+ADDED: Train/test split evaluation (R², RMSE, MAE) with re-fit on full dataset.
 """
 
 import os
@@ -11,6 +12,8 @@ import pickle
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 def train_digital_social_models():
     print("🤖 Starting Domain 4: Digital & Social Random Forest Regressor Pipeline...")
@@ -72,8 +75,49 @@ def train_digital_social_models():
     X_lone = df[loneliness_features]
     y_lone = df[loneliness_target]
     
-    # Train Model 1: Internet Addiction
-    print("   Fitting Internet Addiction Scale Regressor...")
+    # --- Evaluation: split data, train on train, evaluate on test ---
+    X_iat_train, X_iat_test, y_iat_train, y_iat_test = train_test_split(
+        X_iat, y_iat, test_size=0.2, random_state=42
+    )
+    X_lone_train, X_lone_test, y_lone_train, y_lone_test = train_test_split(
+        X_lone, y_lone, test_size=0.2, random_state=42
+    )
+    print(f"   Train/Test split: {len(X_iat_train)} train, {len(X_iat_test)} test (IAT); {len(X_lone_train)} train, {len(X_lone_test)} test (Loneliness)")
+
+    # Train Model 1: Internet Addiction (on train)
+    print("   Fitting Internet Addiction Scale Regressor (train split)...")
+    rf_iat_eval = RandomForestRegressor(
+        n_estimators=300,
+        min_samples_leaf=15,
+        oob_score=True,
+        random_state=42,
+        n_jobs=-1
+    )
+    rf_iat_eval.fit(X_iat_train, y_iat_train)
+    y_iat_pred = rf_iat_eval.predict(X_iat_test)
+    iat_r2 = r2_score(y_iat_test, y_iat_pred)
+    iat_rmse = np.sqrt(mean_squared_error(y_iat_test, y_iat_pred))
+    iat_mae = mean_absolute_error(y_iat_test, y_iat_pred)
+    print(f"     ✅ Internet Addiction Test R²: {iat_r2:.4f}, RMSE: {iat_rmse:.4f}, MAE: {iat_mae:.4f}")
+
+    # Train Model 2: Loneliness (on train)
+    print("   Fitting Loneliness Scale Regressor (train split)...")
+    rf_lone_eval = RandomForestRegressor(
+        n_estimators=300,
+        min_samples_leaf=15,
+        oob_score=True,
+        random_state=42,
+        n_jobs=-1
+    )
+    rf_lone_eval.fit(X_lone_train, y_lone_train)
+    y_lone_pred = rf_lone_eval.predict(X_lone_test)
+    lone_r2 = r2_score(y_lone_test, y_lone_pred)
+    lone_rmse = np.sqrt(mean_squared_error(y_lone_test, y_lone_pred))
+    lone_mae = mean_absolute_error(y_lone_test, y_lone_pred)
+    print(f"     ✅ Loneliness Test R²: {lone_r2:.4f}, RMSE: {lone_rmse:.4f}, MAE: {lone_mae:.4f}")
+
+    # --- Now re-fit on FULL dataset for production ---
+    print("   Re-fitting on full dataset for production...")
     rf_iat = RandomForestRegressor(
         n_estimators=300,
         min_samples_leaf=15,
@@ -84,8 +128,6 @@ def train_digital_social_models():
     rf_iat.fit(X_iat, y_iat)
     print(f"     ✅ Internet Addiction OOB R² Score: {rf_iat.oob_score_:.4f}")
     
-    # Train Model 2: Loneliness
-    print("   Fitting Loneliness Scale Regressor...")
     rf_lone = RandomForestRegressor(
         n_estimators=300,
         min_samples_leaf=15,
@@ -137,6 +179,32 @@ def train_digital_social_models():
     with open(output_meta_path, "w") as f:
         json.dump(metadata, f, indent=2)
     print(f"🎉 Balanced feature schema metadata exported to -> {output_meta_path}\n")
+
+    # --- Save evaluation metrics ---
+    eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")
+    domain_metrics = {
+        "internet_addiction_model": {
+            "r2": round(iat_r2, 4),
+            "rmse": round(iat_rmse, 4),
+            "mae": round(iat_mae, 4),
+            "test_set_size": int(len(X_iat_test))
+        },
+        "loneliness_model": {
+            "r2": round(lone_r2, 4),
+            "rmse": round(lone_rmse, 4),
+            "mae": round(lone_mae, 4),
+            "test_set_size": int(len(X_lone_test))
+        }
+    }
+    if os.path.exists(eval_metrics_path):
+        with open(eval_metrics_path, "r") as f:
+            all_metrics = json.load(f)
+    else:
+        all_metrics = {}
+    all_metrics["domain_4_digital_and_social"] = domain_metrics
+    with open(eval_metrics_path, "w") as f:
+        json.dump(all_metrics, f, indent=2)
+    print(f"[SUCCESS] Evaluation metrics saved to -> {eval_metrics_path}")
 
 if __name__ == "__main__":
     train_digital_social_models()

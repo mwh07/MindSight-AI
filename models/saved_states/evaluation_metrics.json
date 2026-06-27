@@ -1,0 +1,135 @@
+{
+  "domain_2_self_esteem": {
+    "metric_type": "N/A - deterministic scoring, no learned parameters",
+    "note": "RSE score is a fixed clinical formula; percentile table is empirical lookup, not a fitted model."
+  },
+  "domain_3_mood_sleep": {
+    "metric_type": "N/A - deterministic scoring, no learned parameters",
+    "note": "PHQ-9 sum and sleep duration are fixed arithmetic, not fitted models. LightGBM model is trained but not used in production inference."
+  },
+  "domain_4_digital_and_social": {
+    "internet_addiction_model": {
+      "r2": 0.8516,
+      "rmse": 7.7315,
+      "mae": 5.5515,
+      "test_set_size": 131
+    },
+    "loneliness_model": {
+      "r2": 0.6052,
+      "rmse": 4.4653,
+      "mae": 3.7077,
+      "test_set_size": 131
+    }
+  },
+  "domain_5_occupational_burnout": {
+    "r2": 0.8193,
+    "rmse": 1.1267,
+    "mae": 0.899,
+    "test_set_size": 12533
+  },
+  "domain_6_severe_clinical": {
+    "logistic_regression": {
+      "accuracy": 0.9982,
+      "macro_f1": 0.6653,
+      "confusion_matrix": [
+        [
+          1305,
+          0,
+          0
+        ],
+        [
+          0,
+          353,
+          0
+        ],
+        [
+          0,
+          3,
+          0
+        ]
+      ],
+      "class_labels": [
+        0,
+        1,
+        2
+      ],
+      "test_set_size": 1661
+    },
+    "isolation_forest": {
+      "anomaly_rate": 0.0465,
+      "note": "Unsupervised; no ground-truth anomaly labels exist, so this reports the realized flagging rate only, not accuracy."
+    }
+  },
+  "domain_1_personality": {
+    "ext": {
+      "EXT1": {
+        "correlation": 0.7909,
+        "mean_log_likelihood": -1.0305
+      },
+      "EXT2": {
+        "correlation": -0.4558,
+        "mean_log_likelihood": -1.7236
+      },
+      "EXT3": {
+        "correlation": 0.8733,
+        "mean_log_likelihood": -0.8566
+      }
+    },
+    "est": {
+      "EST1": {
+        "correlation": 0.7381,
+        "mean_log_likelihood": -1.1229
+      },
+      "EST2": {
+        "correlation": -0.4047,
+        "mean_log_likelihood": -1.6871
+      },
+      "EST3": {
+        "correlation": 0.8931,
+        "mean_log_likelihood": -0.2534
+      }
+    },
+    "agr": {
+      "AGR1": {
+        "correlation": 0.4541,
+        "mean_log_likelihood": -1.3385
+      },
+      "AGR2": {
+        "correlation": 0.4512,
+        "mean_log_likelihood": -1.2469
+      },
+      "AGR3": {
+        "correlation": 0.6232,
+        "mean_log_likelihood": -1.2534
+      }
+    },
+    "csn": {
+      "CSN1": {
+        "correlation": 0.58,
+        "mean_log_likelihood": -1.2591
+      },
+      "CSN2": {
+        "correlation": -0.1746,
+        "mean_log_likelihood": -1.6739
+      },
+      "CSN3": {
+        "correlation": 0.871,
+        "mean_log_likelihood": -0.5126
+      }
+    },
+    "opn": {
+      "OPN1": {
+        "correlation": 0.5447,
+        "mean_log_likelihood": -1.2537
+      },
+      "OPN2": {
+        "correlation": 0.2044,
+        "mean_log_likelihood": -1.3927
+      },
+      "OPN3": {
+        "correlation": 0.7046,
+        "mean_log_likelihood": -1.0142
+      }
+    }
+  }
+}

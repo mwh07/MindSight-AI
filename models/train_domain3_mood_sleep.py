@@ -3,6 +3,7 @@
 MINDSIGHT Domain 3 Calibration Engine (v2.11 - Standardized)
 Trains a multi-class LightGBM classifier to estimate clinical mood severity 
 and map sleep timing profiles. Outputs native txt states and JSON metadata.
+ADDED: Evaluation metrics note (deterministic PHQ-9 + sleep; LightGBM not used in production).
 """
 
 import os
@@ -163,6 +164,22 @@ def train_mood_sleep_classifier():
         json.dump(model_state, f, indent=4)
         
     print(f"[SUCCESS] Domain 3 aligned parameters saved to -> {json_output_path}\n")
+
+    # --- Save evaluation metrics (deterministic; LightGBM not used in production) ---
+    eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")
+    domain_metrics = {
+        "metric_type": "N/A - deterministic scoring, no learned parameters",
+        "note": "PHQ-9 sum and sleep duration are fixed arithmetic, not fitted models. LightGBM model is trained but not used in production inference."
+    }
+    if os.path.exists(eval_metrics_path):
+        with open(eval_metrics_path, "r") as f:
+            all_metrics = json.load(f)
+    else:
+        all_metrics = {}
+    all_metrics["domain_3_mood_sleep"] = domain_metrics
+    with open(eval_metrics_path, "w") as f:
+        json.dump(all_metrics, f, indent=2)
+    print(f"[SUCCESS] Evaluation metrics saved to -> {eval_metrics_path}")
 
 if __name__ == "__main__":
     train_mood_sleep_classifier()

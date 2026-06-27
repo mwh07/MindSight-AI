@@ -3,6 +3,7 @@
 MINDSIGHT Domain 6 Calibration Engine (v3.4 - Standardized)
 Trains a clinical screening classifier and anomaly detector using an explicit OvR wrapper.
 Prioritizes real clinical datasets and dynamically resolves schema configurations.
+ADDED: Train/test split evaluation (accuracy, macro-F1, confusion matrix) with re-fit on full dataset.
 """
 
 import os
@@ -13,6 +14,8 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.ensemble import IsolationForest
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
 
 def generate_high_fidelity_reference_cohort(n_samples=5000):
     """Generates an epidemiologically grounded clinical reference population."""
@@ -144,27 +147,51 @@ def train_clinical_screening_pipeline():
 
     print(f"📋 Confirmed reference matrix shape: {X.shape} across classes: {unique_classes.tolist()}")
 
-    print("   Fitting High-Fidelity One-Vs-Rest Wrapped Logistic Classifier...")
+    # --- Evaluation: split data with stratification ---
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    print(f"   Train/Test split: {len(X_train)} train, {len(X_test)} test (stratified)")
+
+    # Train classifier on train split
+    print("   Fitting High-Fidelity One-Vs-Rest Wrapped Logistic Classifier (eval split)...")
     base_estimator = LogisticRegression(
         solver='lbfgs',
         class_weight='balanced',
         max_iter=1000,
         random_state=42
     )
-    classifier = OneVsRestClassifier(base_estimator)
-    classifier.fit(X, y)
-    
-    # Manually expose aggregated .coef_ and .intercept_ matrices for downstream script binding
-    classifier.coef_ = np.vstack([estimator.coef_ for estimator in classifier.estimators_])
-    classifier.intercept_ = np.array([estimator.intercept_[0] for estimator in classifier.estimators_])
-    
-    print("   Fitting Stable Population Isolation Forest...")
+    classifier_eval = OneVsRestClassifier(base_estimator)
+    classifier_eval.fit(X_train, y_train)
+    y_pred = classifier_eval.predict(X_test)
+    acc = accuracy_score(y_test, y_pred)
+    macro_f1 = f1_score(y_test, y_pred, average='macro')
+    cm = confusion_matrix(y_test, y_pred).tolist()
+    print(f"     ✅ Test Accuracy: {acc:.4f}, Macro-F1: {macro_f1:.4f}")
+
+    # IsolationForest: fit on full data to compute anomaly rate
+    print("   Fitting Stable Population Isolation Forest (full data)...")
     anomaly_detector = IsolationForest(
         n_estimators=200,
         contamination=0.05,
         random_state=42
     )
     anomaly_detector.fit(X)
+    anomaly_pred = anomaly_detector.predict(X)
+    anomaly_rate = np.mean(anomaly_pred == -1)
+
+    # --- Re-fit classifier on full dataset for production ---
+    print("   Re-fitting classifier on full dataset for production...")
+    classifier = OneVsRestClassifier(LogisticRegression(
+        solver='lbfgs',
+        class_weight='balanced',
+        max_iter=1000,
+        random_state=42
+    ))
+    classifier.fit(X, y)
+    # Manually expose aggregated .coef_ and .intercept_ matrices for downstream script binding
+    classifier.coef_ = np.vstack([estimator.coef_ for estimator in classifier.estimators_])
+    classifier.intercept_ = np.array([estimator.intercept_[0] for estimator in classifier.estimators_])
     
     # Save optimized payload stack
     model_payload = {
@@ -193,6 +220,31 @@ def train_clinical_screening_pipeline():
         json.dump(metadata, f, indent=2)
     print(f"🎉 Metadata verification layout exported to -> {output_meta_path}")
     print("[SUCCESS] Domain 6 pipeline optimization complete.\n")
+
+    # --- Save evaluation metrics ---
+    eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")
+    domain_metrics = {
+        "logistic_regression": {
+            "accuracy": round(acc, 4),
+            "macro_f1": round(macro_f1, 4),
+            "confusion_matrix": cm,
+            "class_labels": [int(c) for c in classifier.classes_],
+            "test_set_size": int(len(X_test))
+        },
+        "isolation_forest": {
+            "anomaly_rate": round(anomaly_rate, 4),
+            "note": "Unsupervised; no ground-truth anomaly labels exist, so this reports the realized flagging rate only, not accuracy."
+        }
+    }
+    if os.path.exists(eval_metrics_path):
+        with open(eval_metrics_path, "r") as f:
+            all_metrics = json.load(f)
+    else:
+        all_metrics = {}
+    all_metrics["domain_6_severe_clinical"] = domain_metrics
+    with open(eval_metrics_path, "w") as f:
+        json.dump(all_metrics, f, indent=2)
+    print(f"[SUCCESS] Evaluation metrics saved to -> {eval_metrics_path}")
 
 if __name__ == "__main__":
     train_clinical_screening_pipeline()
