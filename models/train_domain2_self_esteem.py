@@ -44,18 +44,19 @@ def compute_rse_score(row, reverse_items):
 def calibrate_self_esteem_norms():
     print("[RUNNING] Initializing Domain 2: Self-Esteem Normative Calibration...")
     
-    dataset_path = "datasets/rosenberg_self_esteem_clean.csv"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataset_path = os.path.join(project_root, "datasets", "rosenberg_self_esteem_clean.csv")
     rses_cols = [f"Q{i}" for i in range(1, 11)]
     reverse_items = [3, 5, 8, 9, 10]  # consistent with frontend and inference
     
     if os.path.exists(dataset_path):
         df = pd.read_csv(dataset_path)
-        print(f"  │ Successfully ingested clean self-esteem dataset: {dataset_path}")
+        print(f"  | Successfully ingested clean self-esteem dataset: {dataset_path}")
         # Filter out extreme age outliers
         df = df[(df['age'] >= 10) & (df['age'] <= 100)]
-        print(f"  │ Filtered age to 10-100, remaining rows: {len(df)}")
+        print(f"  | Filtered age to 10-100, remaining rows: {len(df)}")
     else:
-        print(f"  │ [WARNING] Dataset {dataset_path} absent. Generating synthetic normative population matrix.")
+        print(f"  | [WARNING] Dataset {dataset_path} absent. Generating synthetic normative population matrix.")
         np.random.seed(42)
         row_count = 2000
         # Generate synthetic 0-4 responses (matching dataset scale)
@@ -91,7 +92,7 @@ def calibrate_self_esteem_norms():
     
     # Calculate cumulative empirical distribution functions from data
     grouped = df.groupby(["gender", "age_band"])
-    print("  │ Calculating cumulative empirical distribution functions for cohorts...")
+    print("  | Calculating cumulative empirical distribution functions for cohorts...")
     
     for (gender_id, age_band), cohort_df in grouped:
         if gender_id not in gender_ids or age_band not in age_bands:
@@ -110,7 +111,7 @@ def calibrate_self_esteem_norms():
         percentile_lookup[cohort_key] = cohort_map
 
     # Save outputs securely
-    output_dir = "models/saved_states"
+    output_dir = os.path.join(project_root, "models", "saved_states")
     os.makedirs(output_dir, exist_ok=True)
     
     pkl_path = os.path.join(output_dir, "domain2_self_esteem.pkl")
@@ -146,8 +147,8 @@ def calibrate_self_esteem_norms():
         json.dump(metadata, f, indent=2)
         
     print(f"[SUCCESS] Normative cohort percentile matrices successfully serialized.")
-    print(f"    └── Pickle Destination: {pkl_path}")
-    print(f"    └── Metadata Contract Destination: {meta_path}\n")
+    print(f"    +-- Pickle Destination: {pkl_path}")
+    print(f"    +-- Metadata Contract Destination: {meta_path}\n")
 
     # --- Save evaluation metrics (deterministic) ---
     eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")

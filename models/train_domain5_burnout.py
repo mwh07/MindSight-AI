@@ -2,8 +2,8 @@
 """
 MINDSIGHT Domain 5 Calibration Engine (v2.9 - Standardized)
 Trains an XGBoost Regressor to predict continuous occupational burnout scores
-from work‑related features only (gender is NOT used in runtime inference).
-ADDED: Train/test split evaluation (R², RMSE, MAE) with re-fit on full dataset.
+from workrelated features only (gender is NOT used in runtime inference).
+ADDED: Train/test split evaluation (R, RMSE, MAE) with re-fit on full dataset.
 """
 
 import os
@@ -15,10 +15,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 def train_burnout_model():
-    print("🚀 Commencing Domain 5 XGBoost Regressor Training Pipeline...")
+    print(" Commencing Domain 5 XGBoost Regressor Training Pipeline...")
     
-    data_path = "datasets/tech_burnout_2026_clean.csv"
-    output_dir = "models/saved_states"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    data_path = os.path.join(project_root, "datasets", "tech_burnout_2026_clean.csv")
+    output_dir = os.path.join(project_root, "models", "saved_states")
     os.makedirs(output_dir, exist_ok=True)
     
     output_model_path = os.path.join(output_dir, "domain5_burnout.json")
@@ -35,13 +36,13 @@ def train_burnout_model():
     if os.path.exists(data_path):
         try:
             df = pd.read_csv(data_path)
-            print(f"  │ Successfully ingested occupational burnout dataset.")
+            print(f"  | Successfully ingested occupational burnout dataset.")
         except Exception as e:
-            print(f"  │ [CRITICAL] Failed to read dataset: {str(e)}")
+            print(f"  | [CRITICAL] Failed to read dataset: {str(e)}")
             df = None
             
     if df is None or len(df) < 50:
-        print("  │ [WARNING] Dataset insufficient. Deploying stable synthetic calibration cohort.")
+        print("  | [WARNING] Dataset insufficient. Deploying stable synthetic calibration cohort.")
         np.random.seed(42)
         row_count = 1000
         df = pd.DataFrame({f: np.random.uniform(1, 10, row_count) for f in schema_features})
@@ -75,13 +76,13 @@ def train_burnout_model():
         random_state=42,
         eval_metric="rmse"
     )
-    print("  │ Training Gradient Boosted Regression Trees (evaluation split)...")
+    print("  | Training Gradient Boosted Regression Trees (evaluation split)...")
     model_eval.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
     y_pred = model_eval.predict(X_test)
     r2 = r2_score(y_test, y_pred)
     rmse = np.sqrt(mean_squared_error(y_test, y_pred))
     mae = mean_absolute_error(y_test, y_pred)
-    print(f"     ✅ Test R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}")
+    print(f"      Test R: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}")
 
     # --- Re-fit on full dataset for production ---
     print("   Re-fitting on full dataset for production...")
@@ -97,7 +98,7 @@ def train_burnout_model():
     model.fit(X, y, eval_set=[(X, y)], verbose=False)
     
     # Threshold extraction using empirical group maxes
-    print("  │ Calibrating empirical score-to-level thresholds...")
+    print("  | Calibrating empirical score-to-level thresholds...")
     max_scores = df.groupby(target_level_col)[target_score_col].max().reindex(["Low", "Moderate", "High", "Severe"])
     
     thresholds = {
@@ -119,8 +120,8 @@ def train_burnout_model():
         json.dump(metadata, f, indent=2)
         
     print(f"[SUCCESS] Domain 5 model and metadata exported.")
-    print(f"   └── Model Path: {output_model_path}")
-    print(f"   └── Metadata Path: {output_meta_path}\n")
+    print(f"   +-- Model Path: {output_model_path}")
+    print(f"   +-- Metadata Path: {output_meta_path}\n")
 
     # --- Save evaluation metrics ---
     eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")

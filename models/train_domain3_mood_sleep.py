@@ -27,10 +27,11 @@ def parse_time_to_hours(time_str):
         return 12.0
 
 def train_mood_sleep_classifier():
-    print("🚀 Commencing Domain 3: Mood & Sleep LightGBM Pipeline...")
-    dataset_path = "datasets/nhanes_joined_mood_sleep.csv"
+    print(" Commencing Domain 3: Mood & Sleep LightGBM Pipeline...")
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataset_path = os.path.join(project_root, "datasets", "nhanes_joined_mood_sleep.csv")
     
-    output_dir = "models/saved_states"
+    output_dir = os.path.join(project_root, "models", "saved_states")
     os.makedirs(output_dir, exist_ok=True)
     txt_output_path = os.path.join(output_dir, "domain3_mood_sleep.txt")
     json_output_path = os.path.join(output_dir, "domain3_mood_sleep_metadata.json")
@@ -43,14 +44,14 @@ def train_mood_sleep_classifier():
     if os.path.exists(dataset_path):
         try:
             df = pd.read_csv(dataset_path)
-            print(f"  │ Successfully ingested clean mood & sleep dataset: {dataset_path}")
+            print(f"  | Successfully ingested clean mood & sleep dataset: {dataset_path}")
         except Exception as e:
-            print(f"  │ [CRITICAL] Failed to read dataset: {str(e)}")
+            print(f"  | [CRITICAL] Failed to read dataset: {str(e)}")
             df = None
 
     # Handle fallback mapping or feature identification
     if df is None or len(df) < 30:
-        print("⚠️ Notice: Insufficient matrix shapes. Generating high-fidelity calibration cohort...")
+        print(" Notice: Insufficient matrix shapes. Generating high-fidelity calibration cohort...")
         np.random.seed(42)
         row_count = 500
         synthetic_data = {col: np.random.randint(0, 4, row_count) for col in schema_dpq_cols}
@@ -71,7 +72,7 @@ def train_mood_sleep_classifier():
     for col in dpq_cols:
         if col in df.columns:
             df = df[~df[col].isin([7, 9])]
-    print(f"  │ Dropped {initial_row_count - len(df)} rows containing non-response codes 7 or 9.")
+    print(f"  | Dropped {initial_row_count - len(df)} rows containing non-response codes 7 or 9.")
     
     # Calculate target label based on the 9 clinical criteria items
     phq9_scoring_cols = [c for c in dpq_cols if c != "DPQ100"]

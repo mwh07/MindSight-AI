@@ -61,7 +61,8 @@ def generate_high_fidelity_reference_cohort(n_samples=5000):
 def train_clinical_screening_pipeline():
     print("[RUNNING] Starting Domain 6: Severe Clinical Screening Pipeline...")
     
-    output_dir = "models/saved_states"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    output_dir = os.path.join(project_root, "models", "saved_states")
     output_model_path = os.path.join(output_dir, "domain6_clinical.pkl")
     output_meta_path = os.path.join(output_dir, "domain6_clinical_metadata.json")
     os.makedirs(output_dir, exist_ok=True)
@@ -74,9 +75,9 @@ def train_clinical_screening_pipeline():
 
     # Prioritized path array
     candidate_paths = [
-        "datasets/ocd_symptoms_clean.csv",
-        "datasets/responses.csv",
-        "responses.csv"
+        os.path.join(project_root, "datasets", "ocd_symptoms_clean.csv"),
+        os.path.join(project_root, "datasets", "responses.csv"),
+        os.path.join(project_root, "responses.csv")
     ]
     
     selected_path = None
@@ -90,16 +91,16 @@ def train_clinical_screening_pipeline():
                 if len(df_candidate) >= 10:
                     selected_path = path
                     df_raw = df_candidate
-                    print(f"🎯 Successfully matched training dataset matrix at: '{path}' ({len(df_raw)} records)")
+                    print(f" Successfully matched training dataset matrix at: '{path}' ({len(df_raw)} records)")
                     break
                 else:
-                    print(f"ℹ️ Found single-patient telemetry or small matrix at '{path}'. Continuing search...")
+                    print(f" Found single-patient telemetry or small matrix at '{path}'. Continuing search...")
             except Exception as e:
-                print(f"⚠️ Could not parse candidate file at '{path}': {e}")
+                print(f" Could not parse candidate file at '{path}': {e}")
 
     use_synthetic_reference = False
     if df_raw is None:
-        print("⚠️ Direct training datasets missing or empty. Spinning up reference cohort...")
+        print(" Direct training datasets missing or empty. Spinning up reference cohort...")
         use_synthetic_reference = True
 
     if use_synthetic_reference:
@@ -121,7 +122,7 @@ def train_clinical_screening_pipeline():
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
             else:
-                print(f"⚠️ Feature column '{col}' missing from data source layout. Initializing with zeros.")
+                print(f" Feature column '{col}' missing from data source layout. Initializing with zeros.")
                 df[col] = 0
         
         # Dynamically build target ordinal labels if missing from source
@@ -139,13 +140,13 @@ def train_clinical_screening_pipeline():
     # Ensure there are at least 2 distinct target classes present to fit the classifier
     unique_classes = np.unique(y)
     if len(unique_classes) < 2:
-        print("⚠️ Selected dataset contains insufficient target distribution classes. Injecting synthetic reference bounds...")
+        print(" Selected dataset contains insufficient target distribution classes. Injecting synthetic reference bounds...")
         df_ref = generate_high_fidelity_reference_cohort(n_samples=2000)
         X = pd.concat([X, df_ref[binary_features]], ignore_index=True)
         y = pd.concat([y, df_ref["clinical_target"]], ignore_index=True).astype(int)
         unique_classes = np.unique(y)
 
-    print(f"📋 Confirmed reference matrix shape: {X.shape} across classes: {unique_classes.tolist()}")
+    print(f" Confirmed reference matrix shape: {X.shape} across classes: {unique_classes.tolist()}")
 
     # --- Evaluation: split data with stratification ---
     X_train, X_test, y_train, y_test = train_test_split(
@@ -167,7 +168,7 @@ def train_clinical_screening_pipeline():
     acc = accuracy_score(y_test, y_pred)
     macro_f1 = f1_score(y_test, y_pred, average='macro')
     cm = confusion_matrix(y_test, y_pred).tolist()
-    print(f"     ✅ Test Accuracy: {acc:.4f}, Macro-F1: {macro_f1:.4f}")
+    print(f"      Test Accuracy: {acc:.4f}, Macro-F1: {macro_f1:.4f}")
 
     # IsolationForest: fit on full data to compute anomaly rate
     print("   Fitting Stable Population Isolation Forest (full data)...")
@@ -200,7 +201,7 @@ def train_clinical_screening_pipeline():
     }
     with open(output_model_path, "wb") as f:
         pickle.dump(model_payload, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print(f"🎉 Calibrated model states saved securely to -> {output_model_path}")
+    print(f" Calibrated model states saved securely to -> {output_model_path}")
     
     # Export standard metadata block containing structural validation hooks
     metadata = {
@@ -218,7 +219,7 @@ def train_clinical_screening_pipeline():
     }
     with open(output_meta_path, "w") as f:
         json.dump(metadata, f, indent=2)
-    print(f"🎉 Metadata verification layout exported to -> {output_meta_path}")
+    print(f" Metadata verification layout exported to -> {output_meta_path}")
     print("[SUCCESS] Domain 6 pipeline optimization complete.\n")
 
     # --- Save evaluation metrics ---
