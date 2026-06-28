@@ -90,7 +90,8 @@ def load_domain6_model():
     with open(meta_path, "r") as f:
         metadata = json.load(f)
     classifier = model_payload["classifier"]
-    return classifier, metadata
+    anomaly_detector = model_payload.get("anomaly_detector", None)
+    return classifier, anomaly_detector, metadata
 
 def get_dataset(domain_name):
     if domain_name == "domain4":

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from plot_utils import (
     load_domain6_model, get_dataset, ensure_output_dir, get_display_name
 )
+from sklearn.decomposition import PCA
 
 def generate_coefficient_plots(classifier, X, feature_names, out_dir):
     if hasattr(classifier, "estimators_"):
@@ -51,17 +52,54 @@ def generate_coefficient_plots(classifier, X, feature_names, out_dir):
     print(f"  | Saved mean absolute coefficient plot: {save_path}")
     return save_path
 
+def generate_anomaly_scatter_plot(anomaly_detector, X, out_dir):
+    preds = anomaly_detector.predict(X)
+    pca = PCA(n_components=2)
+    X_pca = pca.fit_transform(X)
+    
+    # Apply JITTER FIX to prevent 8,000 dots from stacking onto 37 coordinates
+    # Adding tiny random noise to spread the identical points out slightly
+    np.random.seed(42)
+    jitter = np.random.normal(0, 0.08, X_pca.shape)
+    X_pca_jittered = X_pca + jitter
+
+    plt.figure(figsize=(10, 8))
+    normal_idx = (preds == 1)
+    anomaly_idx = (preds == -1)
+    
+    plt.scatter(X_pca_jittered[normal_idx, 0], X_pca_jittered[normal_idx, 1], 
+                c='blue', alpha=0.3, label='Normal (Inliers)', s=20, edgecolors='none')
+    plt.scatter(X_pca_jittered[anomaly_idx, 0], X_pca_jittered[anomaly_idx, 1], 
+                c='red', alpha=0.8, marker='*', label='Atypical (Anomalies)', s=80, edgecolors='black')
+                
+    plt.title("Isolation Forest Anomaly Detection (PCA with Jitter)")
+    plt.xlabel("Principal Component 1")
+    plt.ylabel("Principal Component 2")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    
+    save_path = os.path.join(out_dir, "domain6_anomaly_scatter.png")
+    plt.savefig(save_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"  | Saved anomaly scatter plot: {save_path}")
+
 def main():
     print("\n📊 Domain 6 — Severe Clinical Screening (LogisticRegression)")
     out_dir = ensure_output_dir()
     try:
-        classifier, meta6 = load_domain6_model()
+        classifier, anomaly_detector, meta6 = load_domain6_model()
         df6 = get_dataset("domain6")
         features6 = meta6["features"]
         X6 = df6[features6].dropna()
         
         print("  ⏳ Computing coefficient plots...")
         generate_coefficient_plots(classifier, X6, features6, out_dir)
+        
+        if anomaly_detector:
+            print("  ⏳ Computing anomaly scatter plot (with Jitter Fix)...")
+            generate_anomaly_scatter_plot(anomaly_detector, X6, out_dir)
+            
         print("  ✅ Domain 6 plots generated.")
     except Exception as e:
         print(f"  ❌ Domain 6 failed: {e}")
