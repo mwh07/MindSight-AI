@@ -61,7 +61,8 @@ def generate_high_fidelity_reference_cohort(n_samples=5000):
 def train_clinical_screening_pipeline():
     print("[RUNNING] Starting Domain 6: Severe Clinical Screening Pipeline...")
     
-    output_dir = "models/saved_states"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    output_dir = os.path.join(project_root, "models", "saved_states")
     output_model_path = os.path.join(output_dir, "domain6_clinical.pkl")
     output_meta_path = os.path.join(output_dir, "domain6_clinical_metadata.json")
     os.makedirs(output_dir, exist_ok=True)
@@ -74,9 +75,9 @@ def train_clinical_screening_pipeline():
 
     # Prioritized path array
     candidate_paths = [
-        "datasets/ocd_symptoms_clean.csv",
-        "datasets/responses.csv",
-        "responses.csv"
+        os.path.join(project_root, "datasets", "ocd_symptoms_clean.csv"),
+        os.path.join(project_root, "datasets", "responses.csv"),
+        os.path.join(project_root, "responses.csv")
     ]
     
     selected_path = None

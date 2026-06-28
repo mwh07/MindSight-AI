@@ -17,8 +17,9 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 def train_burnout_model():
     print("🚀 Commencing Domain 5 XGBoost Regressor Training Pipeline...")
     
-    data_path = "datasets/tech_burnout_2026_clean.csv"
-    output_dir = "models/saved_states"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    data_path = os.path.join(project_root, "datasets", "tech_burnout_2026_clean.csv")
+    output_dir = os.path.join(project_root, "models", "saved_states")
     os.makedirs(output_dir, exist_ok=True)
     
     output_model_path = os.path.join(output_dir, "domain5_burnout.json")

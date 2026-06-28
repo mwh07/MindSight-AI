@@ -18,8 +18,9 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 def train_digital_social_models():
     print("🤖 Starting Domain 4: Digital & Social Random Forest Regressor Pipeline...")
     
-    data_path = "datasets/internet_phq_loneliness_clean.csv"
-    output_dir = "models/saved_states"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    data_path = os.path.join(project_root, "datasets", "internet_phq_loneliness_clean.csv")
+    output_dir = os.path.join(project_root, "models", "saved_states")
     output_model_path = os.path.join(output_dir, "domain4_digital_social.pkl")
     output_meta_path = os.path.join(output_dir, "domain4_digital_social_metadata.json")
     os.makedirs(output_dir, exist_ok=True)

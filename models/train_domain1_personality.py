@@ -83,7 +83,8 @@ def calibrate_personality_space():
     grm_registry = {}
     all_processed_features = []
     
-    dataset_path = "datasets/big_five_personality_clean.csv"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataset_path = os.path.join(project_root, "datasets", "big_five_personality_clean.csv")
     df = None
     if os.path.exists(dataset_path):
         try:
@@ -215,7 +216,7 @@ def calibrate_personality_space():
         else:
             item_fit_metrics[trait.lower()] = {"note": "No dataset available for item fit"}
 
-    output_dir = "models/saved_states"
+    output_dir = os.path.join(project_root, "models", "saved_states")
     os.makedirs(output_dir, exist_ok=True)
     
     output_model_path = os.path.join(output_dir, "domain1_grm_parameters.pkl")

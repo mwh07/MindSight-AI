@@ -44,7 +44,8 @@ def compute_rse_score(row, reverse_items):
 def calibrate_self_esteem_norms():
     print("[RUNNING] Initializing Domain 2: Self-Esteem Normative Calibration...")
     
-    dataset_path = "datasets/rosenberg_self_esteem_clean.csv"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataset_path = os.path.join(project_root, "datasets", "rosenberg_self_esteem_clean.csv")
     rses_cols = [f"Q{i}" for i in range(1, 11)]
     reverse_items = [3, 5, 8, 9, 10]  # consistent with frontend and inference
     
@@ -110,7 +111,7 @@ def calibrate_self_esteem_norms():
         percentile_lookup[cohort_key] = cohort_map
 
     # Save outputs securely
-    output_dir = "models/saved_states"
+    output_dir = os.path.join(project_root, "models", "saved_states")
     os.makedirs(output_dir, exist_ok=True)
     
     pkl_path = os.path.join(output_dir, "domain2_self_esteem.pkl")

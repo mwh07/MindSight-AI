@@ -28,9 +28,10 @@ def parse_time_to_hours(time_str):
 
 def train_mood_sleep_classifier():
     print("🚀 Commencing Domain 3: Mood & Sleep LightGBM Pipeline...")
-    dataset_path = "datasets/nhanes_joined_mood_sleep.csv"
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    dataset_path = os.path.join(project_root, "datasets", "nhanes_joined_mood_sleep.csv")
     
-    output_dir = "models/saved_states"
+    output_dir = os.path.join(project_root, "models", "saved_states")
     os.makedirs(output_dir, exist_ok=True)
     txt_output_path = os.path.join(output_dir, "domain3_mood_sleep.txt")
     json_output_path = os.path.join(output_dir, "domain3_mood_sleep_metadata.json")
