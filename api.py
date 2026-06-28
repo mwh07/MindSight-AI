@@ -37,9 +37,9 @@ def debug_print(message, level="INFO"):
 @app.route('/test', methods=['GET'])
 def test():
     """Simple test endpoint"""
-    debug_print("🧪 Test endpoint called", "INFO")
+    debug_print(" Test endpoint called", "INFO")
     return jsonify({
-        'message': 'Code running perfectly here! ✅',
+        'message': 'Code running perfectly here! ',
         'status': 'Server is working',
         'timestamp': datetime.now().isoformat(),
         'project_root': PROJECT_ROOT
@@ -48,7 +48,7 @@ def test():
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
-    debug_print("💚 Health check called", "INFO")
+    debug_print(" Health check called", "INFO")
     
     # Check if models are trained
     saved_states_dir = os.path.join(PROJECT_ROOT, "models", "saved_states")
@@ -89,20 +89,20 @@ def assess():
         return response
 
     debug_print("=" * 60, "START")
-    debug_print("🚀 Received POST request to /assess", "INFO")
+    debug_print(" Received POST request to /assess", "INFO")
 
     try:
         # Step 1: Get JSON data
-        debug_print("📥 Step 1: Extracting JSON data", "INFO")
+        debug_print(" Step 1: Extracting JSON data", "INFO")
         data = request.get_json()
         if not data:
-            debug_print("❌ No data provided", "ERROR")
+            debug_print(" No data provided", "ERROR")
             return jsonify({'error': 'No data provided'}), 400
-        debug_print(f"✅ Received {len(data)} fields", "SUCCESS")
+        debug_print(f" Received {len(data)} fields", "SUCCESS")
 
 
         # --- NEW: Save response to tests/responses.csv and append to tests/all_responses.csv ---
-        debug_print("💾 Step 1.5: Saving response to tests/", "INFO")
+        debug_print(" Step 1.5: Saving response to tests/", "INFO")
         responses_path = os.path.join(PROJECT_ROOT, "tests", "responses.csv")
         all_responses_path = os.path.join(PROJECT_ROOT, "tests", "all_responses.csv")
         os.makedirs(os.path.dirname(responses_path), exist_ok=True)
@@ -126,7 +126,7 @@ def assess():
             writer = csv.DictWriter(f, fieldnames=ordered_headers, extrasaction='ignore', restval=0)
             writer.writeheader()
             writer.writerow(data)
-        debug_print(f"✅ Overwrote {responses_path} with new response", "SUCCESS")
+        debug_print(f" Overwrote {responses_path} with new response", "SUCCESS")
 
         # Append to all_responses.csv
         file_exists = os.path.isfile(all_responses_path)
@@ -135,10 +135,10 @@ def assess():
             if not file_exists or os.stat(all_responses_path).st_size == 0:
                 writer.writeheader()
             writer.writerow(data)
-        debug_print(f"✅ Appended to {all_responses_path}", "SUCCESS")
+        debug_print(f" Appended to {all_responses_path}", "SUCCESS")
 
         # Step 2: Create temporary CSV
-        debug_print("📝 Step 2: Creating temporary CSV", "INFO")
+        debug_print(" Step 2: Creating temporary CSV", "INFO")
         df = pd.DataFrame([data])
         temp_csv = tempfile.NamedTemporaryFile(
             mode='w', suffix='.csv', delete=False, newline='', encoding='utf-8'
@@ -146,26 +146,26 @@ def assess():
         temp_csv_path = temp_csv.name
         df.to_csv(temp_csv_path, index=False)
         temp_csv.close()
-        debug_print(f"✅ CSV created: {temp_csv_path}", "SUCCESS")
+        debug_print(f" CSV created: {temp_csv_path}", "SUCCESS")
 
         # Step 3: Set up archive and current report directories
-        debug_print("📁 Step 3: Setting up output directories", "INFO")
+        debug_print(" Step 3: Setting up output directories", "INFO")
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
         # Archive: reports/report_{timestamp}/
         reports_dir = os.path.join(PROJECT_ROOT, "reports", f"report_{timestamp}")
         os.makedirs(reports_dir, exist_ok=True)
-        debug_print(f"✅ Archive dir: {reports_dir}", "SUCCESS")
+        debug_print(f" Archive dir: {reports_dir}", "SUCCESS")
 
         # Current report: individual_eval/current_report/ (overwrites)
         current_report_dir = os.path.join(PROJECT_ROOT, "individual_eval", "current_report")
         if os.path.exists(current_report_dir):
             shutil.rmtree(current_report_dir)
         os.makedirs(current_report_dir, exist_ok=True)
-        debug_print(f"✅ Current report dir: {current_report_dir}", "SUCCESS")
+        debug_print(f" Current report dir: {current_report_dir}", "SUCCESS")
 
         # Step 4: Run inference pipeline
-        debug_print("⚙️ Step 4: Running inference pipeline", "INFO")
+        debug_print(" Step 4: Running inference pipeline", "INFO")
         with open(temp_csv_path, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             rows = list(reader)
@@ -187,21 +187,21 @@ def assess():
                     sanitized_payload[column_id] = int(val_stripped)
             except ValueError:
                 sanitized_payload[column_id] = val_stripped
-        debug_print(f"✅ Payload sanitized with {len(sanitized_payload)} fields", "SUCCESS")
+        debug_print(f" Payload sanitized with {len(sanitized_payload)} fields", "SUCCESS")
         try:
             from models.profile_aggregator import generate_full_profile
 
-            debug_print("🔮 Running profile generation...", "INFO")
+            debug_print(" Running profile generation...", "INFO")
             compiled_profile = generate_full_profile(sanitized_payload)
-            debug_print("✅ Profile generated successfully", "SUCCESS")
+            debug_print(" Profile generated successfully", "SUCCESS")
         except Exception as e:
-            debug_print(f"❌ Inference error: {str(e)}", "ERROR")
+            debug_print(f" Inference error: {str(e)}", "ERROR")
             import traceback
             debug_print(traceback.format_exc(), "ERROR")
             raise
 
         # Step 5: Save JSON and CSV to both archive and current_report
-        debug_print("💾 Step 5: Saving results", "INFO")
+        debug_print(" Step 5: Saving results", "INFO")
 
         # Custom JSON encoder
         class NumpyEncoder(json.JSONEncoder):
@@ -227,22 +227,22 @@ def assess():
         with open(json_path_archive, 'w', encoding='utf-8') as f:
             json.dump(compiled_profile, f, indent=2, cls=NumpyEncoder)
         shutil.copy(temp_csv_path, csv_path_archive)
-        debug_print(f"✅ Archived to: {reports_dir}", "SUCCESS")
+        debug_print(f" Archived to: {reports_dir}", "SUCCESS")
 
         # Save to current_report (overwrite)
         json_path_current = os.path.join(current_report_dir, json_filename)
         csv_path_current = os.path.join(current_report_dir, csv_filename)
         shutil.copy(json_path_archive, json_path_current)
         shutil.copy(csv_path_archive, csv_path_current)
-        debug_print(f"✅ Updated current_report: {current_report_dir}", "SUCCESS")
+        debug_print(f" Updated current_report: {current_report_dir}", "SUCCESS")
 
         # Step 6: Clean up temporary CSV
-        debug_print("🧹 Step 6: Cleaning up", "INFO")
+        debug_print(" Step 6: Cleaning up", "INFO")
         os.unlink(temp_csv_path)
-        debug_print("✅ Temporary files cleaned", "SUCCESS")
+        debug_print(" Temporary files cleaned", "SUCCESS")
 
         # Step 7: Prepare response
-        debug_print("📤 Step 7: Preparing response", "INFO")
+        debug_print(" Step 7: Preparing response", "INFO")
         summary = {
             'domains_processed': len(compiled_profile.get('domain_scores', {})),
             'profile_version': compiled_profile.get('version', 'unknown'),
@@ -251,7 +251,7 @@ def assess():
 
         response_data = {
             'status': 'success',
-            'message': 'Assessment completed successfully ✅',
+            'message': 'Assessment completed successfully ',
             'timestamp': timestamp,
             'archive_dir': reports_dir,
             'current_report_dir': current_report_dir,
@@ -259,12 +259,12 @@ def assess():
             'profile_preview': {k: v for k, v in list(compiled_profile.items())[:5]}
         }
 
-        debug_print("✅ Response prepared successfully", "SUCCESS")
+        debug_print(" Response prepared successfully", "SUCCESS")
         debug_print("=" * 60, "END")
         return jsonify(response_data), 200
 
     except Exception as e:
-        debug_print(f"❌ Error in assessment: {str(e)}", "ERROR")
+        debug_print(f" Error in assessment: {str(e)}", "ERROR")
         import traceback
         debug_print(traceback.format_exc(), "ERROR")
         return jsonify({
@@ -283,7 +283,7 @@ def train_models():
         response.headers.add('Access-Control-Allow-Methods', 'POST')
         return response
     
-    debug_print("🛠️ Training endpoint called", "INFO")
+    debug_print(" Training endpoint called", "INFO")
     try:
         import subprocess
         result = subprocess.run(
@@ -311,7 +311,7 @@ def flush_data():
         response.headers.add('Access-Control-Allow-Methods', 'POST')
         return response
     
-    debug_print("🧹 Flush endpoint called", "INFO")
+    debug_print(" Flush endpoint called", "INFO")
     try:
         target = request.json.get('target', 'all')
         
@@ -325,7 +325,7 @@ def flush_data():
                             shutil.rmtree(item_path)
                         else:
                             os.remove(item_path)
-                debug_print("✅ Flushed training data", "SUCCESS")
+                debug_print(" Flushed training data", "SUCCESS")
         
         if target in ['reports', 'all']:
             reports_dir = os.path.join(PROJECT_ROOT, "reports")
@@ -337,7 +337,7 @@ def flush_data():
                             shutil.rmtree(item_path)
                         else:
                             os.remove(item_path)
-                debug_print("✅ Flushed reports", "SUCCESS")
+                debug_print(" Flushed reports", "SUCCESS")
         
         if target in ['eval', 'all']:
             eval_dir = os.path.join(PROJECT_ROOT, "individual_eval")
@@ -349,7 +349,7 @@ def flush_data():
                             shutil.rmtree(item_path)
                         else:
                             os.remove(item_path)
-                debug_print("✅ Flushed eval directory", "SUCCESS")
+                debug_print(" Flushed eval directory", "SUCCESS")
         
         return jsonify({
             'status': 'success',
@@ -361,7 +361,7 @@ def flush_data():
     
 @app.route('/latest-report', methods=['GET'])
 def latest_report():
-    debug_print("📂 Fetching latest report", "INFO")
+    debug_print(" Fetching latest report", "INFO")
     current_report_dir = os.path.join(PROJECT_ROOT, "individual_eval", "current_report")
     if not os.path.exists(current_report_dir):
         return jsonify({'error': 'No report found'}), 404
@@ -376,12 +376,12 @@ def latest_report():
 
 if __name__ == "__main__":
     print("=" * 80)
-    print("🚀 MINDSIGHT REST API SERVER")
+    print(" MINDSIGHT REST API SERVER")
     print("=" * 80)
-    print(f"📍 Server: http://localhost:5000")
-    print(f"🔧 Debug Mode: {DEBUG}")
-    print(f"📁 Project Root: {PROJECT_ROOT}")
-    print("\n📋 Available Endpoints:")
+    print(f" Server: http://localhost:5000")
+    print(f" Debug Mode: {DEBUG}")
+    print(f" Project Root: {PROJECT_ROOT}")
+    print("\n Available Endpoints:")
     print("   GET  /test     - Simple test endpoint")
     print("   GET  /health   - Health check with model status")
     print("   GET  /latest-report - Fetch the latest report")
@@ -389,7 +389,7 @@ if __name__ == "__main__":
     print("   POST /train    - Trigger model retraining")
     print("   POST /flush    - Flush data (train/reports/eval/all)")
     print("=" * 80)
-    print("✅ Server is ready! 🎯")
+    print(" Server is ready! ")
     print("=" * 80)
     
     app.run(debug=True, port=5000, host='0.0.0.0')

@@ -56,7 +56,7 @@ def flush_directory_contents(target_dir, label="Directory"):
     """Wipes all files/folders inside a path while strictly preserving '.gitkeep'."""
     if not os.path.exists(target_dir):
         return
-    print(f"🧹 Flushing active workspace -> {label}")
+    print(f" Flushing active workspace -> {label}")
     for item in os.listdir(target_dir):
         item_path = os.path.join(target_dir, item)
         if item == ".gitkeep":
@@ -67,7 +67,7 @@ def flush_directory_contents(target_dir, label="Directory"):
             else:
                 os.remove(item_path)
         except Exception as e:
-            print(f"  │ ⚠️ Failed to purge item {item}: {str(e)}")
+            print(f"    Failed to purge item {item}: {str(e)}")
 
 def are_models_trained():
     """Evaluates whether models are trained and validates against .schema_hash."""
@@ -99,10 +99,10 @@ def are_models_trained():
 def execute_training_submodule(script_relative_path, step_description):
     """Executes an individual domain training script as an isolated subprocess."""
     full_script_path = os.path.normpath(os.path.join(PROJECT_ROOT, script_relative_path))
-    print(f"  🚀 [LAUNCHING] {step_description}")
+    print(f"   [LAUNCHING] {step_description}")
     
     if not os.path.exists(full_script_path):
-        print(f"  ❌ ERROR: Script missing at: {full_script_path}")
+        print(f"   ERROR: Script missing at: {full_script_path}")
         return False
         
     execution_env = os.environ.copy()
@@ -124,26 +124,26 @@ def execute_training_submodule(script_relative_path, step_description):
                 break
         return process.poll() == 0
     except Exception as e:
-        print(f"  ❌ SYSTEM EXCEPTION: Calibration fault: {str(e)}")
+        print(f"   SYSTEM EXCEPTION: Calibration fault: {str(e)}")
         return False
 
 def run_standalone_survey():
     """Spawns the interactive psychometric survey test runner."""
-    print("\n📝 DIRECTIVE: INTERACTIVE DIAGNOSTIC SURVEY INTAKE")
+    print("\n DIRECTIVE: INTERACTIVE DIAGNOSTIC SURVEY INTAKE")
     print("Handing control context over to: scripts/take_assessment.py\n" + "-" * 80)
     target_script = os.path.normpath(os.path.join(PROJECT_ROOT, "scripts", "take_assessment.py"))
     
     if not os.path.exists(target_script):
-        print(f"❌ CRITICAL ERROR: Survey script missing at: {target_script}")
+        print(f" CRITICAL ERROR: Survey script missing at: {target_script}")
         return
     try:
         subprocess.run([sys.executable, target_script], check=True)
     except Exception as e:
-        print(f"\n❌ RUNTIME ERROR: Survey console failure: {str(e)}")
+        print(f"\n RUNTIME ERROR: Survey console failure: {str(e)}")
 
 def run_standalone_training_suite():
     """Sequentially calibrates all six multi-domain model pipelines."""
-    print("\n🛠️  DIRECTIVE: MULTI-DOMAIN MODEL CALIBRATION SUITE")
+    print("\n  DIRECTIVE: MULTI-DOMAIN MODEL CALIBRATION SUITE")
     training_manifest = [
         ("models/train_domain1_personality.py", "Domain 1: Personality Trait Vectors"),
         ("models/train_domain2_self_esteem.py", "Domain 2: Self-Esteem Empirical Mapping"),
@@ -154,7 +154,7 @@ def run_standalone_training_suite():
     ]
     for script_path, description in training_manifest:
         if not execute_training_submodule(script_path, description):
-            print(f"\n❌ Build failed during processing of {description}.")
+            print(f"\n Build failed during processing of {description}.")
             sys.exit(1)
             
     try:
@@ -165,11 +165,11 @@ def run_standalone_training_suite():
             current_hash = hashlib.md5(f.read()).hexdigest()
         with open(hash_path, "w") as f:
             f.write(current_hash)
-        print(f"🔒 Schema hash updated to {current_hash}")
+        print(f" Schema hash updated to {current_hash}")
     except Exception as e:
-        print(f"⚠️ Failed to update schema hash: {e}")
+        print(f" Failed to update schema hash: {e}")
         
-    print("🎉 All 6 structural domains calibrated successfully.")
+    print(" All 6 structural domains calibrated successfully.")
 
 def run_evaluation_pipeline(custom_csv_path=None):
     """Runs the core deterministic 5-phase evaluation and packaging sequence."""
@@ -181,15 +181,15 @@ def run_evaluation_pipeline(custom_csv_path=None):
     
     print("\n[PHASE 2] VALIDATING MODEL PACKAGES")
     if not are_models_trained():
-        print("⚠️ Models flagged as UNTRAINED. Auto-triggering calibration suite...")
+        print(" Models flagged as UNTRAINED. Auto-triggering calibration suite...")
         run_standalone_training_suite()
     else:
-        print("✅ Pre-calibrated model weights discovered.")
+        print(" Pre-calibrated model weights discovered.")
 
     print("\n[PHASE 3] INGESTING INTERACTIVE SURVEY RECORD")
     csv_path = custom_csv_path if custom_csv_path else os.path.normpath(os.path.join(PROJECT_ROOT, "tests", "responses.csv"))
     if not os.path.exists(csv_path) or os.stat(csv_path).st_size == 0:
-        print(f"❌ CRITICAL CONFIGURATION FAULT: Ledger missing at: {csv_path}")
+        print(f" CRITICAL CONFIGURATION FAULT: Ledger missing at: {csv_path}")
         sys.exit(1)
         
     raw_payload = {}
@@ -201,7 +201,7 @@ def run_evaluation_pipeline(custom_csv_path=None):
                 raise ValueError("Spreadsheet tracker contains 0 record rows.")
             raw_payload = rows[-1]
     except Exception as e:
-        print(f"❌ RECOVERY FAULT: Processing ledger failed: {str(e)}")
+        print(f" RECOVERY FAULT: Processing ledger failed: {str(e)}")
         sys.exit(1)
 
     # --- NEW: Append the current response to tests/all_responses.csv ---
@@ -227,7 +227,7 @@ def run_evaluation_pipeline(custom_csv_path=None):
         if not file_exists or os.stat(all_responses_path).st_size == 0:
             writer.writeheader()
         writer.writerow(raw_payload)
-    print(f"  ├── Appended response to {all_responses_path}")
+    print(f"   Appended response to {all_responses_path}")
 
     sanitized_payload = {}
     for column_id, string_value in raw_payload.items():
@@ -260,12 +260,12 @@ def run_evaluation_pipeline(custom_csv_path=None):
         
         with open(output_json_path, "w", encoding='utf-8') as json_file:
             json.dump(compiled_profile, json_file, indent=2, cls=MindsightNumpyEncoder)
-        print(f"  ├── Captured structural data payload -> {output_json_path}")
+        print(f"   Captured structural data payload -> {output_json_path}")
         
         # compile_pdf_report(compiled_profile, output_pdf_path)
-        # print(f"  └── Rendered visualization profile -> {output_pdf_path}")
+        # print(f"   Rendered visualization profile -> {output_pdf_path}")
     except Exception as e:
-        print(f"❌ PIPELINE ERROR: Analytics evaluation run crashed: {str(e)}")
+        print(f" PIPELINE ERROR: Analytics evaluation run crashed: {str(e)}")
         sys.exit(1)
 
     print("\n[PHASE 5] PACKAGING SYSTEM ACCOUNTABILITY ARCHIVES")
@@ -274,11 +274,11 @@ def run_evaluation_pipeline(custom_csv_path=None):
     
     # Copy compiled JSON and CSV to the timestamped archive
     shutil.copy(output_json_path, os.path.join(archive_reports_dir, f"compiled_profile_{sandbox_dir_name}.json"))
-    print(f"  ├── Archived profile JSON -> {archive_reports_dir}")
+    print(f"   Archived profile JSON -> {archive_reports_dir}")
     
     dest_csv_path = os.path.join(archive_reports_dir, "responses.csv")
     shutil.copy(csv_path, dest_csv_path)
-    print(f"  ├── Archived responses CSV -> {archive_reports_dir}")
+    print(f"   Archived responses CSV -> {archive_reports_dir}")
     
     # Prepare current_report inside individual_eval/ (overwrite if exists)
     current_report_dir = os.path.join(individual_eval_dir, "current_report")
@@ -288,11 +288,11 @@ def run_evaluation_pipeline(custom_csv_path=None):
     
     shutil.copy(output_json_path, os.path.join(current_report_dir, f"compiled_profile_{sandbox_dir_name}.json"))
     shutil.copy(csv_path, os.path.join(current_report_dir, "responses.csv"))
-    print(f"  ├── Saved as current_report -> {current_report_dir}")
+    print(f"   Saved as current_report -> {current_report_dir}")
     
     # Clean up the intermediate eval_* sandbox directory
     shutil.rmtree(target_output_dir)
-    print(f"  └── Cleaned intermediate sandbox -> {target_output_dir}")
+    print(f"   Cleaned intermediate sandbox -> {target_output_dir}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -374,13 +374,13 @@ if __name__ == "__main__":
         else:
             # Default action if no operational mode parameter is explicitly passed
             if not any([args.survey, args.train]):
-                print("\n💡 No operational selector assigned. Running standard automated evaluation cycle...")
+                print("\n No operational selector assigned. Running standard automated evaluation cycle...")
                 run_evaluation_pipeline(custom_csv_path=args.csv_path)
                 
         print("\n" + "=" * 80)
-        print("✨ MINDSIGHT PROCESS ROUTER OVERSEE COMPLETED SMOOTHLY")
+        print(" MINDSIGHT PROCESS ROUTER OVERSEE COMPLETED SMOOTHLY")
         print("=" * 80 + "\n")
         
     except KeyboardInterrupt:
-        print("\n\n⚠️ Core execution override signal caught. Stopping master router cleanly.")
+        print("\n\n Core execution override signal caught. Stopping master router cleanly.")
         sys.exit(0)
