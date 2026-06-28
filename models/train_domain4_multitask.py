@@ -3,7 +3,7 @@
 MINDSIGHT Domain 4 Calibration Engine (v2.8 - Standardized)
 Trains independent Random Forest Regressors for Internet Addiction (IAT)
 and Loneliness scales. Outputs unified schemas and clinical severity boundaries.
-ADDED: Train/test split evaluation (R², RMSE, MAE) with re-fit on full dataset.
+ADDED: Train/test split evaluation (R, RMSE, MAE) with re-fit on full dataset.
 """
 
 import os
@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 def train_digital_social_models():
-    print("🤖 Starting Domain 4: Digital & Social Random Forest Regressor Pipeline...")
+    print(" Starting Domain 4: Digital & Social Random Forest Regressor Pipeline...")
     
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     data_path = os.path.join(project_root, "datasets", "internet_phq_loneliness_clean.csv")
@@ -38,13 +38,13 @@ def train_digital_social_models():
     if os.path.exists(data_path):
         try:
             df = pd.read_csv(data_path)
-            print(f"📊 Loaded {df.shape[0]} rows for training from demographic cohort database.")
+            print(f" Loaded {df.shape[0]} rows for training from demographic cohort database.")
         except Exception as e:
-            print(f"⚠️ [CRITICAL] Failed to read dataset: {str(e)}")
+            print(f" [CRITICAL] Failed to read dataset: {str(e)}")
             df = None
 
     if df is None or len(df) < 30:
-        print("⚠️ Notice: Dataset absent or insufficient. Generating standard calibration cohort...")
+        print(" Notice: Dataset absent or insufficient. Generating standard calibration cohort...")
         np.random.seed(42)
         row_count = 1000
         synthetic_data = {}
@@ -99,7 +99,7 @@ def train_digital_social_models():
     iat_r2 = r2_score(y_iat_test, y_iat_pred)
     iat_rmse = np.sqrt(mean_squared_error(y_iat_test, y_iat_pred))
     iat_mae = mean_absolute_error(y_iat_test, y_iat_pred)
-    print(f"     ✅ Internet Addiction Test R²: {iat_r2:.4f}, RMSE: {iat_rmse:.4f}, MAE: {iat_mae:.4f}")
+    print(f"      Internet Addiction Test R: {iat_r2:.4f}, RMSE: {iat_rmse:.4f}, MAE: {iat_mae:.4f}")
 
     # Train Model 2: Loneliness (on train)
     print("   Fitting Loneliness Scale Regressor (train split)...")
@@ -115,7 +115,7 @@ def train_digital_social_models():
     lone_r2 = r2_score(y_lone_test, y_lone_pred)
     lone_rmse = np.sqrt(mean_squared_error(y_lone_test, y_lone_pred))
     lone_mae = mean_absolute_error(y_lone_test, y_lone_pred)
-    print(f"     ✅ Loneliness Test R²: {lone_r2:.4f}, RMSE: {lone_rmse:.4f}, MAE: {lone_mae:.4f}")
+    print(f"      Loneliness Test R: {lone_r2:.4f}, RMSE: {lone_rmse:.4f}, MAE: {lone_mae:.4f}")
 
     # --- Now re-fit on FULL dataset for production ---
     print("   Re-fitting on full dataset for production...")
@@ -127,7 +127,7 @@ def train_digital_social_models():
         n_jobs=-1
     )
     rf_iat.fit(X_iat, y_iat)
-    print(f"     ✅ Internet Addiction OOB R² Score: {rf_iat.oob_score_:.4f}")
+    print(f"      Internet Addiction OOB R Score: {rf_iat.oob_score_:.4f}")
     
     rf_lone = RandomForestRegressor(
         n_estimators=300,
@@ -137,7 +137,7 @@ def train_digital_social_models():
         n_jobs=-1
     )
     rf_lone.fit(X_lone, y_lone)
-    print(f"     ✅ Loneliness OOB R² Score: {rf_lone.oob_score_:.4f}")
+    print(f"      Loneliness OOB R Score: {rf_lone.oob_score_:.4f}")
     
     iat_importances = {feat: float(imp) for feat, imp in zip(iat_features, rf_iat.feature_importances_)}
     lone_importances = {feat: float(imp) for feat, imp in zip(loneliness_features, rf_lone.feature_importances_)}
@@ -149,7 +149,7 @@ def train_digital_social_models():
     }
     with open(output_model_path, "wb") as f:
         pickle.dump(model_payload, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print(f"🎉 Estimator binaries serialized to -> {output_model_path}")
+    print(f" Estimator binaries serialized to -> {output_model_path}")
     
     # Enrich metadata contract rules
     metadata = {
@@ -179,7 +179,7 @@ def train_digital_social_models():
     
     with open(output_meta_path, "w") as f:
         json.dump(metadata, f, indent=2)
-    print(f"🎉 Balanced feature schema metadata exported to -> {output_meta_path}\n")
+    print(f" Balanced feature schema metadata exported to -> {output_meta_path}\n")
 
     # --- Save evaluation metrics ---
     eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")

@@ -51,12 +51,12 @@ def calibrate_self_esteem_norms():
     
     if os.path.exists(dataset_path):
         df = pd.read_csv(dataset_path)
-        print(f"  │ Successfully ingested clean self-esteem dataset: {dataset_path}")
+        print(f"  | Successfully ingested clean self-esteem dataset: {dataset_path}")
         # Filter out extreme age outliers
         df = df[(df['age'] >= 10) & (df['age'] <= 100)]
-        print(f"  │ Filtered age to 10-100, remaining rows: {len(df)}")
+        print(f"  | Filtered age to 10-100, remaining rows: {len(df)}")
     else:
-        print(f"  │ [WARNING] Dataset {dataset_path} absent. Generating synthetic normative population matrix.")
+        print(f"  | [WARNING] Dataset {dataset_path} absent. Generating synthetic normative population matrix.")
         np.random.seed(42)
         row_count = 2000
         # Generate synthetic 0-4 responses (matching dataset scale)
@@ -92,7 +92,7 @@ def calibrate_self_esteem_norms():
     
     # Calculate cumulative empirical distribution functions from data
     grouped = df.groupby(["gender", "age_band"])
-    print("  │ Calculating cumulative empirical distribution functions for cohorts...")
+    print("  | Calculating cumulative empirical distribution functions for cohorts...")
     
     for (gender_id, age_band), cohort_df in grouped:
         if gender_id not in gender_ids or age_band not in age_bands:
@@ -147,8 +147,8 @@ def calibrate_self_esteem_norms():
         json.dump(metadata, f, indent=2)
         
     print(f"[SUCCESS] Normative cohort percentile matrices successfully serialized.")
-    print(f"    └── Pickle Destination: {pkl_path}")
-    print(f"    └── Metadata Contract Destination: {meta_path}\n")
+    print(f"    +-- Pickle Destination: {pkl_path}")
+    print(f"    +-- Metadata Contract Destination: {meta_path}\n")
 
     # --- Save evaluation metrics (deterministic) ---
     eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")

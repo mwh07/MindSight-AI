@@ -18,10 +18,7 @@ from scipy.stats import pearsonr
 try:
     from girth import grm_mml
 except ImportError:
-    try:
-        from girth.polytomous import grm_mml
-    except ImportError:
-        grm_mml = None
+    grm_mml = None
 
 # Reverse-coded items in Domain 1 (as per IMP-70 questionnaire)
 REVERSE_ITEMS = ["EXT2", "EST2", "CSN2"]
@@ -89,12 +86,12 @@ def calibrate_personality_space():
     if os.path.exists(dataset_path):
         try:
             df = pd.read_csv(dataset_path)
-            print(f"  │ Successfully ingested clean empirical dataset: {dataset_path}")
+            print(f"  | Successfully ingested clean empirical dataset: {dataset_path}")
         except Exception as e:
-            print(f"  │ [CRITICAL] Failed to read dataset: {str(e)}")
+            print(f"  | [CRITICAL] Failed to read dataset: {str(e)}")
             df = None
     else:
-        print(f"  │ [WARNING] Dataset path {dataset_path} not found.")
+        print(f"  | [WARNING] Dataset path {dataset_path} not found.")
 
     use_synthetic_fallback = df is None
 
@@ -102,7 +99,7 @@ def calibrate_personality_space():
     item_fit_metrics = {}
 
     for trait in traits:
-        print(f"  │ Processing Trait: {trait}...")
+        print(f"  | Processing Trait: {trait}...")
         
         # Locate item columns specifically belonging to this trait
         trait_cols = [col for col in df.columns if col.upper().startswith(trait)] if df is not None else []
@@ -110,7 +107,7 @@ def calibrate_personality_space():
         # Keep exactly the first 3 items according to schema_config.json
         if len(trait_cols) >= 3:
             trait_cols = sorted(trait_cols, key=lambda x: int(re.search(r'\d+', x).group()))[:3]
-            print(f"  │    └── Found empirical columns: {trait_cols}")
+            print(f"  |    +-- Found empirical columns: {trait_cols}")
             all_processed_features.extend(trait_cols)
             
             # Extract raw records, reverse-code specific items
@@ -122,7 +119,7 @@ def calibrate_personality_space():
                 if col_name in REVERSE_ITEMS:
                     # Reverse 1-5 Likert
                     matrix_reversed[idx] = reverse_likert_5(raw_matrix_original[idx])
-                    print(f"  │    └── Reverse-coded item: {col_name}")
+                    print(f"  |    +-- Reverse-coded item: {col_name}")
             
             # Now normalize to 0-indexed format for Girth (subtract 1)
             # But the reverse-coded values are still 1-5, so we subtract 1
@@ -132,7 +129,7 @@ def calibrate_personality_space():
             matrix = matrix_normalized
 
         else:
-            print(f"  │    └── [WARNING] Insufficient columns for {trait}. Triggering high-fidelity fallback.")
+            print(f"  |    +-- [WARNING] Insufficient columns for {trait}. Triggering high-fidelity fallback.")
             use_synthetic_fallback = True
             trait_cols = [f"{trait}1", f"{trait}2", f"{trait}3"]
             all_processed_features.extend(trait_cols)
@@ -149,7 +146,7 @@ def calibrate_personality_space():
                 alpha_vectors = estimates['Discrimination']
                 beta_matrices = estimates['Difficulty']
             except Exception as e:
-                print(f"  │    └── [Convergence Notice] MML boundary hit ({str(e)}). Deploying deterministic solvers.")
+                print(f"  |    +-- [Convergence Notice] MML boundary hit ({str(e)}). Deploying deterministic solvers.")
                 np.random.seed(42)
                 alpha_vectors = np.random.uniform(1.2, 2.4, matrix.shape[0])
                 beta_matrices = np.sort(np.random.uniform(-1.8, 1.8, (matrix.shape[0], 4)), axis=1)
