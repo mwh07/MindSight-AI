@@ -16,11 +16,6 @@ import lightgbm as lgb
 import shap
 
 # Single source of truth for every feature's human-readable display name.
-# This used to also be shared with pdf_generator.py, but PDF generation has
-# been discarded -- the JSON output of generate_full_profile() is now the
-# sole presentation contract, consumed directly by the frontend. Kept this
-# map here (rather than inlining labels per-domain again) because a single
-# shared source of truth is still correct even with only one consumer.
 try:
     from models.feature_mappings import FEATURE_TRANSLATION_MAP
 except ImportError:
@@ -29,16 +24,14 @@ except ImportError:
     except ImportError:
         FEATURE_TRANSLATION_MAP = {}
 
+# Reverse-coded items in Domain 1 (as per IMP-70 questionnaire)
+REVERSE_ITEMS = ["EXT2", "EST2", "CSN2"]
 
 def get_display_name(feature_key, fallback=None):
     """
     Single helper every domain below uses to resolve a feature's
     human-readable label. Looks up FEATURE_TRANSLATION_MAP first; if a key
-    is genuinely absent from that map (e.g. a synthetic/derived feature like
-    "PHQ_Core" that isn't a raw questionnaire item), falls back to a
-    title-cased version of the raw key rather than ever leaving an
-    all-caps/raw code like "IAT2" in front of the person reading their own
-    report.
+    is genuinely absent from that map, falls back to a title-cased version.
     """
     if feature_key in FEATURE_TRANSLATION_MAP:
         return FEATURE_TRANSLATION_MAP[feature_key]
@@ -73,13 +66,11 @@ def evaluate_domain1_personality(raw_payload):
     """
     Computes all 5 Big Five personality vector dimensions using true GRM-IRT parameter estimation.
     Falls back to a normalized mean-based estimate ONLY if the fitted parameter file is genuinely
-    missing or unreadable -- per-trait scoring failures are now isolated so one bad trait cannot
-    discard valid scores already computed for the other traits.
+    missing or unreadable -- per-trait scoring failures are now isolated.
     """
     model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain1_grm_parameters.pkl")
 
     # Static fallback traits layer if the pickle file is not found.
-    # Matches schema_config.json exactly: 3 items per trait, not 4.
     traits_fallback = {
         "extraversion": ["EXT1", "EXT2", "EXT3"],
         "emotional_stability": ["EST1", "EST2", "EST3"],
@@ -111,8 +102,7 @@ def evaluate_domain1_personality(raw_payload):
             grid = np.linspace(-4.0, 4.0, 81)
 
             for trait_name in grm_registry.keys():
-                # Each trait is scored independently -- a failure scoring ONE trait must not
-                # discard correctly-computed scores for the other traits.
+                # Each trait is scored independently
                 try:
                     item_params = grm_registry[trait_name].get("items", {})
 
@@ -122,6 +112,9 @@ def evaluate_domain1_personality(raw_payload):
                     for item_id, params in item_params.items():
                         try:
                             raw_val = float(raw_payload.get(item_id, 3.0))
+                            # Reverse-code if needed
+                            if item_id in REVERSE_ITEMS:
+                                raw_val = 6 - raw_val   # 1->5, 2->4, 3->3, 4->2, 5->1
                             # Constrain Likert responses to standard 1 to 5 index range
                             resp = int(np.clip(round(raw_val), 1, 5))
                         except (ValueError, TypeError):
@@ -132,7 +125,6 @@ def evaluate_domain1_personality(raw_payload):
                         b = np.array(params.get("b", [-1.5, -0.5, 0.5, 1.5]))
 
                         # Compute category boundary probabilities across the entire theta grid
-                        # Shape: (len(grid), len(b))
                         p_star = 1.0 / (1.0 + np.exp(-a * (grid[:, None] - b[None, :])))
 
                         # Anchor boundary matrices: P*(0) = 1.0, P*(K) = 0.0
@@ -149,18 +141,19 @@ def evaluate_domain1_personality(raw_payload):
                     placement[mapped_name] = round(float(grid[best_idx]), 3)
                 except Exception:
                     # Only this single trait falls through to its mean-based fallback below;
-                    # every other trait's already-computed real theta is preserved.
                     continue
 
-    # Fill in ONLY the traits that real GRM scoring did not produce above --
-    # this no longer wipes out traits that scored successfully.
+    # Fill in ONLY the traits that real GRM scoring did not produce above
     for trait_name, keys in traits_fallback.items():
         if trait_name in placement:
             continue
         vals = []
         for k in keys:
             try:
-                vals.append(float(raw_payload.get(k, 3.0)))
+                raw_val = float(raw_payload.get(k, 3.0))
+                if k in REVERSE_ITEMS:
+                    raw_val = 6 - raw_val
+                vals.append(raw_val)
             except (ValueError, TypeError):
                 vals.append(3.0)
         mean_score = np.mean(vals)
@@ -235,9 +228,7 @@ def evaluate_domain3_mood_sleep(raw_payload):
     """
     Evaluates clinical PHQ-9 tracking matrices and localized sleep timings.
     Reads the real schema_config.json key names (DPQ010-DPQ090) and excludes
-    NHANES refusal/"don't know" codes (7, 9) from the symptom sum, per spec.
-    DPQ100 is intentionally excluded -- it is an impairment/difficulty item,
-    not one of the 9 PHQ-9 symptom-frequency items.
+    NHANES refusal/"don't know" codes (7, 9) from the symptom sum.
     """
     phq_total = 0
     for i in range(1, 10):
@@ -245,7 +236,6 @@ def evaluate_domain3_mood_sleep(raw_payload):
         try:
             val = int(float(raw_payload.get(item_key, 0)))
             if val in (7, 9):
-                # Refusal / "don't know" -- excluded from the symptom sum entirely
                 continue
             phq_total += max(0, min(3, val))
         except (ValueError, TypeError):
@@ -288,11 +278,7 @@ def evaluate_domain3_mood_sleep(raw_payload):
 def evaluate_domain4_multitask(raw_payload):
     """
     Evaluates attachment, loneliness, and relationship dynamics via the trained model.
-    Drivers are now sourced ONLY from the real model's SHAP attributions -- the
-    previously hardcoded feature_importance_map has been removed entirely, since it
-    was a fixed dictionary of invented numbers, not derived from any trained model.
-    Strictly limits inputs and drivers to IAT and Loneliness indices; domain 5
-    leakage remains excluded.
+    Drivers are sourced from real model SHAP attributions.
     """
     # 1. Resolve asset paths dynamically
     model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain4_digital_social.pkl")
@@ -302,9 +288,6 @@ def evaluate_domain4_multitask(raw_payload):
         model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain4_multitask.pkl")
         meta_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain4_multitask_metadata.json")
 
-    # 2. Fallback generator using ONLY native Domain 4 metrics -- used ONLY when the
-    #    real trained model/metadata cannot be loaded at all. This path computes raw
-    #    item sums, NOT model predictions, and must never be confused with real output.
     def execute_contract_fallback():
         iat_vals = []
         for i in range(1, 11):
@@ -357,34 +340,24 @@ def evaluate_domain4_multitask(raw_payload):
         return {
             "domain": "domain_4_digital_and_social",
             "placement": {
-                # Fallback uses raw sums (not model predictions)
                 "predicted_total_internet_addiction": round(pred_iat, 3),
                 "predicted_total_loneliness": round(pred_lone, 3),
-                "loneliness_score": round(pred_lone * 3.33, 3),  # rough conversion to 0-100
+                "loneliness_score": round(pred_lone * 3.33, 3),
                 "classification": "Elevated Distress Profile" if pred_lone > 18 else "Baseline Cohort Profile",
                 "data_source": "fallback_raw_sum"
             },
             "top_contributors": sorted(contributors, key=lambda x: x["contribution"], reverse=True)[:3]
         }
 
-    # If assets are physically missing, trigger the contract fallback immediately
     if not os.path.exists(model_path) or not os.path.exists(meta_path):
         return execute_contract_fallback()
         
     try:
-        # 3. Load model state and metadata layout
         with open(model_path, "rb") as f:
             model_payload = pickle.load(f)
         with open(meta_path, "r") as f:
             metadata = json.load(f)
 
-        # 4. Extract BOTH model objects. The design is two independent
-        #    RandomForestRegressor models (addiction, loneliness), each fit on
-        #    its own feature subset -- NOT one shared 18-feature dataframe fed
-        #    to a single extracted model. Feeding the full schema feature list
-        #    to a model trained on a smaller subset raises a hard sklearn
-        #    ValueError ("feature names unseen at fit time"), which is exactly
-        #    what was silently sending every call here into the fallback path.
         addiction_model = None
         loneliness_model = None
 
@@ -398,11 +371,6 @@ def evaluate_domain4_multitask(raw_payload):
                     loneliness_model = model_payload[key]
                     break
 
-            # If named keys weren't found, fall back to inspecting each fitted
-            # model's own feature_names_in_ to tell them apart -- this works
-            # regardless of what the dict's keys happen to be named, since
-            # scikit-learn stores the real fit-time feature names on the
-            # estimator itself, not on the dict wrapper around it.
             if addiction_model is None or loneliness_model is None:
                 candidates = [v for v in model_payload.values() if hasattr(v, "predict")]
                 for cand in candidates:
@@ -411,26 +379,17 @@ def evaluate_domain4_multitask(raw_payload):
                         addiction_model = cand
                     elif any(f.startswith("loneliness") for f in fit_features) and loneliness_model is None:
                         loneliness_model = cand
-                # Last resort: if still unresolved and exactly two candidates exist,
-                # assign by order (addiction first) per the documented design.
                 if addiction_model is None and loneliness_model is None and len(candidates) >= 2:
                     addiction_model, loneliness_model = candidates[0], candidates[1]
         else:
-            # Single object in the pickle -- cannot run two-model inference.
             raise ValueError("domain4_digital_social.pkl does not contain two separate models")
 
         if addiction_model is None or loneliness_model is None:
             raise ValueError("could not resolve both addiction and loneliness models from saved_states pickle")
 
-        # 5. Build EACH model's input row from THAT model's own fit-time feature
-        #    names (feature_names_in_), not from metadata["features"] -- this is
-        #    correct regardless of which exact subset each model was trained on,
-        #    without needing to hardcode or guess the split.
         def build_row_for(model):
             fit_features = list(getattr(model, "feature_names_in_", []))
             if not fit_features:
-                # Model wasn't fit on a DataFrame (no stored feature names) --
-                # fall back to metadata's declared feature list as a last resort.
                 fit_features = metadata.get("features", [])
             row = [float(raw_payload.get(f_name, 2.0)) for f_name in fit_features]
             return pd.DataFrame([row], columns=fit_features), fit_features
@@ -438,12 +397,9 @@ def evaluate_domain4_multitask(raw_payload):
         df_addiction, addiction_features = build_row_for(addiction_model)
         df_loneliness, loneliness_features = build_row_for(loneliness_model)
 
-        # 6. Run each model on ONLY its own feature subset.
         pred_addiction = float(addiction_model.predict(df_addiction)[0])
         pred_loneliness_score = float(loneliness_model.predict(df_loneliness)[0])
 
-        # 7. Extract real SHAP attributions from each model separately, then
-        #    merge into one combined top-contributors list for this domain.
         contributors = []
         for model, df_row, feat_list in [
             (addiction_model, df_addiction, addiction_features),
@@ -462,8 +418,6 @@ def evaluate_domain4_multitask(raw_payload):
                 row_shap = [0.0] * len(feat_list)
 
             for idx, f_name in enumerate(feat_list):
-                # GUARD: Prevent any leaked external features (e.g. domain 5,
-                # or age/gender) from surfacing in top drivers for this domain.
                 if not (f_name.startswith("IAT") or f_name.startswith("loneliness")):
                     continue
                 try:
@@ -481,12 +435,6 @@ def evaluate_domain4_multitask(raw_payload):
             for i in range(1, 4):
                 contributors.append({"feature": f"IAT{i}", "display_name": get_display_name(f"IAT{i}"), "contribution": 0.0, "direction": "+"})
 
-        # -------------------------------------------------------------------------
-        # FIX: USE MODEL PREDICTIONS INSTEAD OF RAW SUMS
-        # -------------------------------------------------------------------------
-        # The raw sums are NOT used for the main placement fields.
-        # We keep them only for reference but do not store them.
-        # All three predicted fields now come from the trained models.
         return {
             "domain": "domain_4_digital_and_social",
             "placement": {
@@ -500,7 +448,6 @@ def evaluate_domain4_multitask(raw_payload):
         }
         
     except Exception:
-        # Catch-all safety net returns the completely clean domain-isolated fallback
         return execute_contract_fallback()
         
 # =====================================================================
@@ -509,21 +456,11 @@ def evaluate_domain4_multitask(raw_payload):
 def evaluate_domain5_burnout(raw_payload):
     """
     Evaluates continuous occupational burnout indices using XGBoost.
-    Driver contributions now come from real SHAP attributions against the trained
-    model, rather than a flat (raw_value * 0.12) scaling -- the previous formula
-    derived both magnitude and direction directly from the input value alone,
-    which meant a driver's reported direction could never disagree with whether
-    the raw score was above or below the scale midpoint, regardless of what the
-    trained model actually learned about that feature.
     """
     model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain5_burnout.json")
     meta_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain5_burnout_metadata.json")
     
     if not os.path.exists(model_path) or not os.path.exists(meta_path):
-        # No real metadata available -- explicitly state tier_thresholds as
-        # None rather than omitting the key or inventing placeholder numbers,
-        # so a frontend can distinguish "model unavailable" from "model ran,
-        # here are its real thresholds."
         return {
             "domain": "domain_5_occupational_burnout",
             "placement": {"burnout_index": 5.0, "burnout_tier_label": "Unavailable", "tier_thresholds": None},
@@ -574,9 +511,6 @@ def evaluate_domain5_burnout(raw_payload):
                 "direction": "+" if weight >= 0 else "-"
             })
     except Exception:
-        # If SHAP attribution genuinely cannot run, fall back to reporting raw input
-        # magnitude only -- explicitly without a fabricated direction inferred from
-        # the input value, since that direction is not a model-derived signal.
         for f_name in features:
             raw_val = float(raw_payload.get(f_name, 3.0 if "score" in f_name else 30.0))
             contributors.append({
@@ -591,10 +525,6 @@ def evaluate_domain5_burnout(raw_payload):
         "placement": {
             "burnout_index": round(pred_score, 3),
             "burnout_tier_label": lvl,
-            # Real, already-loaded tier boundaries from this model's own
-            # metadata -- not invented display bounds. XGBoost regression
-            # output has no natural 0-1 or 0-10 range, so without these a
-            # frontend has no honest way to size a bar/gauge for this value.
             "tier_thresholds": {
                 "low_to_moderate": thresholds["low_to_moderate"],
                 "moderate_to_high": thresholds["moderate_to_high"],
@@ -610,8 +540,6 @@ def evaluate_domain5_burnout(raw_payload):
 def evaluate_domain6_clinical(raw_payload):
     """
     Evaluates clinical risk categorization and checks for profile anomalies.
-    FIX: Filters out inactive features to stop zero-contribution elements 
-         from leaking into and shuffling the top driver slots.
     """
     model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain6_clinical.pkl")
     meta_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain6_clinical_metadata.json")
@@ -656,14 +584,12 @@ def evaluate_domain6_clinical(raw_payload):
 
     contributors = []
     for idx, feat_name in enumerate(binary_features):
-        # Only evaluate features that were actively triggered (value == 1)
         if input_vector[idx] == 0:
             continue
             
         coeff_weight = float(class_coefficients[idx])
         contribution_value = coeff_weight * input_vector[idx]
         
-        # Keep track of true directionality based on underlying weight sign
         contributors.append({
             "feature": feat_name,
             "display_name": get_display_name(feat_name),
@@ -671,7 +597,6 @@ def evaluate_domain6_clinical(raw_payload):
             "direction": "+" if contribution_value >= 0 else "-"
         })
         
-    # Sort purely by absolute impact magnitude
     contributors = sorted(contributors, key=lambda x: x["contribution"], reverse=True)
     
     return {

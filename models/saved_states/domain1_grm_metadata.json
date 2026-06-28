@@ -25,5 +25,10 @@
     "CSN",
     "OPN"
   ],
-  "execution_mode": "empirical_mml_estimated"
+  "execution_mode": "empirical_mml_estimated",
+  "reverse_items": [
+    "EXT2",
+    "EST2",
+    "CSN2"
+  ]
 }

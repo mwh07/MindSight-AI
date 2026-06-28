@@ -4,6 +4,7 @@ MINDSIGHT Domain 1 Calibration Engine (v2.8 - Standardized)
 Performs authentic Marginal Maximum Likelihood (MML) estimation 
 for Graded Response Model (GRM-IRT) personality trait vectors.
 ADDED: Item fit statistics (correlation, mean log-likelihood) on the full dataset.
+FIX: Reverse-code items EXT2, EST2, CSN2 before GRM fitting and correlation.
 """
 
 import os
@@ -21,6 +22,13 @@ except ImportError:
         from girth.polytomous import grm_mml
     except ImportError:
         grm_mml = None
+
+# Reverse-coded items in Domain 1 (as per IMP-70 questionnaire)
+REVERSE_ITEMS = ["EXT2", "EST2", "CSN2"]
+
+def reverse_likert_5(val):
+    """Reverse a 1-5 Likert value: 1->5, 2->4, 3->3, 4->2, 5->1."""
+    return 6 - val
 
 def simulate_authentic_grm_data(n_persons=1000, n_items=3, n_categories=5):
     """Generates a mathematically sound polytomous response matrix using true IRT parameters."""
@@ -104,27 +112,35 @@ def calibrate_personality_space():
             print(f"  │    └── Found empirical columns: {trait_cols}")
             all_processed_features.extend(trait_cols)
             
-            # Extract raw records
-            raw_matrix = df[trait_cols].dropna().values.T.astype(int)
+            # Extract raw records, reverse-code specific items
+            # We'll build a matrix with reversed values for selected items
+            raw_matrix_original = df[trait_cols].dropna().values.T.astype(int)
+            # Apply reverse-coding to the rows that correspond to reverse items
+            matrix_reversed = raw_matrix_original.copy()
+            for idx, col_name in enumerate(trait_cols):
+                if col_name in REVERSE_ITEMS:
+                    # Reverse 1-5 Likert
+                    matrix_reversed[idx] = reverse_likert_5(raw_matrix_original[idx])
+                    print(f"  │    └── Reverse-coded item: {col_name}")
             
-            # Robust item-wise normalization to 0-indexed integer format for Girth compliance
-            matrix = np.zeros_like(raw_matrix)
-            for idx in range(raw_matrix.shape[0]):
-                # If data is standard 1-5 Likert, subtract 1; otherwise subtract min observed
-                min_val = 1 if (raw_matrix[idx].min() >= 1 and raw_matrix[idx].max() <= 5) else raw_matrix[idx].min()
-                matrix[idx] = raw_matrix[idx] - min_val
+            # Now normalize to 0-indexed format for Girth (subtract 1)
+            # But the reverse-coded values are still 1-5, so we subtract 1
+            matrix_normalized = matrix_reversed - 1
+            # Ensure 0-4 range
+            matrix_normalized = np.clip(matrix_normalized, 0, 4)
+            matrix = matrix_normalized
+
         else:
             print(f"  │    └── [WARNING] Insufficient columns for {trait}. Triggering high-fidelity fallback.")
             use_synthetic_fallback = True
             trait_cols = [f"{trait}1", f"{trait}2", f"{trait}3"]
             all_processed_features.extend(trait_cols)
             matrix = simulate_authentic_grm_data(n_persons=1000, n_items=3, n_categories=5)
-            # For synthetic, we can create a dummy df for later correlation
             if df is None:
-                df_synth = pd.DataFrame(matrix.T, columns=trait_cols)
-                df = df_synth  # but we need full data; we'll handle later
+                df_synth = pd.DataFrame(matrix.T + 1, columns=trait_cols)  # +1 to get 1-5 scale
+                df = df_synth
 
-        # Execute Marginal Maximum Likelihood Estimation with hard-seeded convergence fallbacks
+        # Execute Marginal Maximum Likelihood Estimation
         if grm_mml is not None and not use_synthetic_fallback:
             try:
                 with np.errstate(invalid='ignore', divide='ignore'):
@@ -137,7 +153,7 @@ def calibrate_personality_space():
                 alpha_vectors = np.random.uniform(1.2, 2.4, matrix.shape[0])
                 beta_matrices = np.sort(np.random.uniform(-1.8, 1.8, (matrix.shape[0], 4)), axis=1)
         else:
-            # Hard-seeded deterministic fallback parameters to ensure absolute profile stability
+            # Hard-seeded deterministic fallback parameters
             np.random.seed(42 + traits.index(trait))
             alpha_vectors = np.random.uniform(1.3, 2.5, matrix.shape[0])
             beta_matrices = np.sort(np.random.uniform(-1.6, 1.6, (matrix.shape[0], 4)), axis=1)
@@ -155,16 +171,22 @@ def calibrate_personality_space():
                 "b": beta_matrices[idx].tolist()
             }
 
-        # --- Compute item fit metrics on the full dataset ---
-        # We need the raw responses for this trait from the full dataset (df)
-        # Get the response matrix (original 1-5 scale)
+        # --- Compute item fit metrics on the full dataset using the REVERSED values ---
         if df is not None:
-            # Extract the raw responses for the trait columns
-            raw_responses = df[trait_cols].dropna()
-            if len(raw_responses) > 0:
-                # Compute theta for each respondent
+            # Get the raw responses (original 1-5) then apply reverse-coding if needed
+            # We'll construct a DataFrame of reversed responses for this trait
+            trait_reversed = pd.DataFrame()
+            for col in trait_cols:
+                if col in REVERSE_ITEMS:
+                    trait_reversed[col] = df[col].apply(reverse_likert_5)
+                else:
+                    trait_reversed[col] = df[col]
+            # Drop rows with missing
+            trait_reversed = trait_reversed.dropna()
+            if len(trait_reversed) > 0:
+                # Compute theta for each respondent using item_params
                 thetas = []
-                for _, row in raw_responses.iterrows():
+                for _, row in trait_reversed.iterrows():
                     resp_dict = {col: row[col] for col in trait_cols}
                     theta = compute_theta_for_respondent(resp_dict, item_params)
                     thetas.append(theta)
@@ -172,10 +194,10 @@ def calibrate_personality_space():
                 # For each item, compute correlation and mean log-likelihood
                 item_metrics = {}
                 for col in trait_cols:
-                    raw_vals = raw_responses[col].values
-                    # Correlation between raw response and theta (valid if theta is continuous)
+                    raw_vals = trait_reversed[col].values
+                    # Correlation between raw (reversed) response and theta
                     corr, _ = pearsonr(raw_vals, thetas)
-                    # Mean log-likelihood: for each respondent, compute log probability of observed response given theta
+                    # Mean log-likelihood
                     log_lik_list = []
                     for idx2, theta_val in enumerate(thetas):
                         resp = int(np.clip(round(raw_vals[idx2]), 1, 5))
@@ -199,18 +221,17 @@ def calibrate_personality_space():
     output_model_path = os.path.join(output_dir, "domain1_grm_parameters.pkl")
     output_meta_path = os.path.join(output_dir, "domain1_grm_metadata.json")
     
-    # Save parameters
     with open(output_model_path, "wb") as f:
         pickle.dump(grm_registry, f, protocol=pickle.HIGHEST_PROTOCOL)
     print(f"[SUCCESS] Genuine IRT parameter states successfully serialized to -> {output_model_path}")
     
-    # Export verification metadata layout
     metadata = {
         "schema_version": "2.6",
         "domain": "domain_1_personality",
         "features": all_processed_features,
         "traits_mapped": traits,
-        "execution_mode": "production_fixed_seeded" if use_synthetic_fallback else "empirical_mml_estimated"
+        "execution_mode": "production_fixed_seeded" if use_synthetic_fallback else "empirical_mml_estimated",
+        "reverse_items": REVERSE_ITEMS
     }
     with open(output_meta_path, "w") as f:
         json.dump(metadata, f, indent=2)
@@ -218,7 +239,6 @@ def calibrate_personality_space():
 
     # --- Save evaluation metrics ---
     eval_metrics_path = os.path.join(output_dir, "evaluation_metrics.json")
-    # Load existing metrics if any
     if os.path.exists(eval_metrics_path):
         with open(eval_metrics_path, "r") as f:
             all_metrics = json.load(f)

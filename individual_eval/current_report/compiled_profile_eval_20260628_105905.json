@@ -1,0 +1,229 @@
+{
+  "schema_version": "4.0",
+  "id_no": "MS-20260628_105916-ANONYMOUS",
+  "age": 21,
+  "sex": "Male",
+  "domain_scores": {
+    "domain_1_personality": {
+      "domain": "domain_1_personality",
+      "placement": {
+        "extraversion": 4.0,
+        "emotional_stability": -4.0,
+        "agreeableness": 1.6,
+        "conscientiousness": 4.0,
+        "openness": 1.6
+      },
+      "top_contributors": [
+        {
+          "feature": "Extraversion",
+          "display_name": "Extraversion Vector",
+          "contribution": 4.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Emotional_Stability",
+          "display_name": "Emotional_Stability Vector",
+          "contribution": 4.0,
+          "direction": "-",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Conscientiousness",
+          "display_name": "Conscientiousness Vector",
+          "contribution": 4.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        }
+      ],
+      "severity_tier": "descriptive",
+      "domain_summary": "Most shaped by extraversion and emotional_stability.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": -4.0,
+        "max": 4.0
+      }
+    },
+    "domain_2_self_esteem": {
+      "domain": "domain_2_self_esteem",
+      "placement": {
+        "score": 38,
+        "max_possible_score": 40,
+        "classification": "High Self-Esteem"
+      },
+      "top_contributors": [
+        {
+          "feature": "Q1",
+          "display_name": "General Self-Worth",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Q2",
+          "display_name": "Acknowledgment of Personal Strengths",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "Q3",
+          "display_name": "Inclination to Feel Like a Failure",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        }
+      ],
+      "severity_tier": "low",
+      "domain_summary": "Self-esteem (high self-esteem) was most influenced by general self-worth and acknowledgment of personal strengths.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": 0,
+        "max": 40
+      }
+    },
+    "domain_3_mood_sleep": {
+      "domain": "domain_3_mood_sleep",
+      "placement": {
+        "phq9_sum": 0,
+        "severity_label": "Minimal or Baseline Profile",
+        "calculated_sleep_duration_hours": 7.0
+      },
+      "top_contributors": [
+        {
+          "feature": "PHQ_Core",
+          "display_name": "Symptom Burden Summation",
+          "contribution": 0.0,
+          "direction": "+",
+          "relative_magnitude": 0.0
+        },
+        {
+          "feature": "Sleep_Duration",
+          "display_name": "Calculated Sleep Duration",
+          "contribution": 0.5,
+          "direction": "+",
+          "relative_magnitude": 100.0
+        }
+      ],
+      "severity_tier": "low",
+      "domain_summary": "Minimal or Baseline Profile mood signal, driven mainly by symptom burden summation and calculated sleep duration.",
+      "scale_reference": {
+        "phq9_sum": {
+          "type": "fixed_range",
+          "min": 0,
+          "max": 27
+        },
+        "sleep_duration_hours": {
+          "type": "reference_band",
+          "low": 7.0,
+          "high": 9.0
+        }
+      }
+    },
+    "domain_4_digital_and_social": {
+      "domain": "domain_4_digital_and_social",
+      "placement": {
+        "predicted_total_internet_addiction": 21.048,
+        "predicted_total_loneliness": 44.951,
+        "loneliness_score": 44.951,
+        "classification": "Baseline Cohort Profile",
+        "data_source": "model_prediction"
+      },
+      "top_contributors": [
+        {
+          "feature": "IAT5",
+          "display_name": "Fear of Missing Out / Digital Dependence",
+          "contribution": 2.681,
+          "direction": "+",
+          "relative_magnitude": 41.9
+        },
+        {
+          "feature": "IAT9",
+          "display_name": "Use of Internet as Emotional Escapism",
+          "contribution": 2.1824,
+          "direction": "+",
+          "relative_magnitude": 34.1
+        },
+        {
+          "feature": "IAT3",
+          "display_name": "Preference for Virtual Relationships",
+          "contribution": 1.5386,
+          "direction": "-",
+          "relative_magnitude": 24.0
+        }
+      ],
+      "severity_tier": "moderate",
+      "domain_summary": "Loneliness and digital-use signals were most influenced by fear of missing out / digital dependence and use of internet as emotional escapism.",
+      "scale_reference": {
+        "predicted_total_internet_addiction": null,
+        "predicted_total_loneliness": null,
+        "loneliness_score": null
+      }
+    },
+    "domain_5_occupational_burnout": {
+      "domain": "domain_5_occupational_burnout",
+      "placement": {
+        "burnout_index": 1.959,
+        "burnout_tier_label": "Low / Controlled Engagement Profile",
+        "tier_thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
+      },
+      "top_contributors": [
+        {
+          "feature": "stress_score",
+          "display_name": "General Perceived Stress Load",
+          "contribution": 4.062,
+          "direction": "-",
+          "relative_magnitude": 73.6
+        },
+        {
+          "feature": "work_life_balance_score",
+          "display_name": "Subjective Work-Life Equilibrium",
+          "contribution": 0.8226,
+          "direction": "+",
+          "relative_magnitude": 14.9
+        },
+        {
+          "feature": "meetings_per_day",
+          "display_name": "Daily Meeting & Communication Load",
+          "contribution": 0.6361,
+          "direction": "+",
+          "relative_magnitude": 11.5
+        }
+      ],
+      "severity_tier": "low",
+      "domain_summary": "Low / Controlled Engagement Profile, driven mainly by general perceived stress load and subjective work-life equilibrium.",
+      "scale_reference": {
+        "type": "tier_thresholds",
+        "thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
+      }
+    },
+    "domain_6_severe_clinical": {
+      "domain": "domain_6_severe_clinical",
+      "placement": {
+        "predicted_condition_code": 0,
+        "predicted_condition_label": "Baseline Healthy Profile",
+        "anomaly_review_flag": false
+      },
+      "top_contributors": [],
+      "severity_tier": "low",
+      "domain_summary": "Baseline Healthy Profile.",
+      "scale_reference": null
+    }
+  },
+  "global_synthesis": "STABLE FUNCTIONAL PROFILE: Multi-domain clinical evaluation reveals strong psychological resilience and homeostatic equilibrium. Neuro-emotional variables, self-appraisal parameters, and occupational metrics all align healthy normative population distributions with no active clinical or environmental distress markers detected.",
+  "plain_language_summary": {
+    "opening": "Overall, this profile looks stable and well-balanced across the areas measured.",
+    "domain_recap": "Across the six areas measured, their extraversion stands out as notably higher than their other traits; self-esteem scored 38 out of 40 (high self-esteem); a PHQ-9 mood screening score of 0 (minimal or baseline profile), with about 7.0 hours of sleep; moderate loneliness signals alongside an internet-use pattern score of 21; and a low / controlled engagement profile (index 2.0) in their work life.",
+    "closing": "No immediate concerns stand out, but routine check-ins on mood, sleep, and workload are always worthwhile.",
+    "recommend_professional_help": false,
+    "full_text": "Overall, this profile looks stable and well-balanced across the areas measured. Across the six areas measured, their extraversion stands out as notably higher than their other traits; self-esteem scored 38 out of 40 (high self-esteem); a PHQ-9 mood screening score of 0 (minimal or baseline profile), with about 7.0 hours of sleep; moderate loneliness signals alongside an internet-use pattern score of 21; and a low / controlled engagement profile (index 2.0) in their work life. No immediate concerns stand out, but routine check-ins on mood, sleep, and workload are always worthwhile."
+  }
+}
