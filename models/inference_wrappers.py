@@ -222,14 +222,17 @@ def evaluate_domain2_self_esteem(raw_payload):
     }
 
 # =====================================================================
-# DOMAIN 3: MOOD SEVERITY & SLEEP METRICS (UNTOUCHED)
+# DOMAIN 3: MOOD SEVERITY & SLEEP METRICS (ML + SHAP)
 # =====================================================================
 def evaluate_domain3_mood_sleep(raw_payload):
     """
     Evaluates clinical PHQ-9 tracking matrices and localized sleep timings.
-    Reads the real schema_config.json key names (DPQ010-DPQ090) and excludes
-    NHANES refusal/"don't know" codes (7, 9) from the symptom sum.
+    NOW USES THE TRAINED LIGHTGBM CLASSIFIER for severity label and SHAP-based contributors,
+    while still reporting the deterministic phq9_sum and calculated sleep duration.
+
+    Falls back to deterministic-only logic if model files are missing.
     """
+    # --- Deterministic calculations (always computed, kept for reference) ---
     phq_total = 0
     for i in range(1, 10):
         item_key = f"DPQ0{i}0"
@@ -240,36 +243,135 @@ def evaluate_domain3_mood_sleep(raw_payload):
             phq_total += max(0, min(3, val))
         except (ValueError, TypeError):
             pass
-            
+
     sleep_onset = parse_time_to_hours(raw_payload.get("SLQ300", "23:00"))
     sleep_wakeup = parse_time_to_hours(raw_payload.get("SLQ310", "07:00"))
-    
     duration = sleep_wakeup - sleep_onset
     if duration < 0:
         duration += 24.0
-        
+
+    # --- Deterministic severity (fallback) ---
     if phq_total >= 20:
-        severity = "Severe Depression"
+        deterministic_severity = "Severe Depression"
     elif phq_total >= 15:
-        severity = "Moderately Severe Depression"
+        deterministic_severity = "Moderately Severe Depression"
     elif phq_total >= 10:
-        severity = "Moderate Depression"
+        deterministic_severity = "Moderate Depression"
     elif phq_total >= 5:
-        severity = "Mild Depression"
+        deterministic_severity = "Mild Depression"
     else:
-        severity = "Minimal or Baseline Profile"
+        deterministic_severity = "Minimal or Baseline Profile"
+
+    # --- Try to load ML model and metadata ---
+    model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain3_mood_sleep.txt")
+    meta_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain3_mood_sleep_metadata.json")
+
+    if not os.path.exists(model_path) or not os.path.exists(meta_path):
+        # Fallback: use deterministic severity and hardcoded contributors
+        return {
+            "domain": "domain_3_mood_sleep",
+            "placement": {
+                "phq9_sum": int(phq_total),
+                "severity_label": deterministic_severity,
+                "calculated_sleep_duration_hours": round(float(duration), 2)
+            },
+            "top_contributors": [
+                {"feature": "PHQ_Core", "display_name": "Symptom Burden Summation", "contribution": float(phq_total), "direction": "+"},
+                {"feature": "Sleep_Duration", "display_name": "Calculated Sleep Duration", "contribution": round(float(abs(7.5 - duration)), 4), "direction": "+" if duration >= 7.0 else "-"}
+            ]
+        }
+
+    # --- Load model and metadata ---
+    try:
+        with open(meta_path, "r") as f:
+            metadata = json.load(f)
+        booster = lgb.Booster(model_file=model_path)
+    except Exception:
+        # If loading fails, fall back to deterministic
+        return {
+            "domain": "domain_3_mood_sleep",
+            "placement": {
+                "phq9_sum": int(phq_total),
+                "severity_label": deterministic_severity,
+                "calculated_sleep_duration_hours": round(float(duration), 2)
+            },
+            "top_contributors": [
+                {"feature": "PHQ_Core", "display_name": "Symptom Burden Summation", "contribution": float(phq_total), "direction": "+"},
+                {"feature": "Sleep_Duration", "display_name": "Calculated Sleep Duration", "contribution": round(float(abs(7.5 - duration)), 4), "direction": "+" if duration >= 7.0 else "-"}
+            ]
+        }
+
+    # --- Build feature matrix exactly as in training ---
+    # Features are stored in metadata["features"] in the correct order
+    # These include DPQ010-DPQ090, bed_hours, wake_hours, calculated_sleep_duration
+    features = metadata["features"]
+    # Compute derived features (same as training script)
+    bed_hours = parse_time_to_hours(raw_payload.get("SLQ300", "23:00"))
+    wake_hours = parse_time_to_hours(raw_payload.get("SLQ310", "07:00"))
+    calc_sleep = (wake_hours - bed_hours) % 24.0
+
+    # Build a row dict with all features in the correct order
+    row_dict = {}
+    for f in features:
+        if f == "bed_hours":
+            row_dict[f] = bed_hours
+        elif f == "wake_hours":
+            row_dict[f] = wake_hours
+        elif f == "calculated_sleep_duration":
+            row_dict[f] = calc_sleep
+        else:
+            # It's a DPQ item
+            row_dict[f] = float(raw_payload.get(f, 0))
+    # Convert to DataFrame with one row
+    df_row = pd.DataFrame([row_dict], columns=features)
+
+    # --- Predict severity class ---
+    pred_class = int(booster.predict(df_row, raw_score=False).argmax(axis=1)[0])
+    classes = metadata.get("classes", ["Minimal", "Mild", "Moderate", "Moderately Severe", "Severe"])
+    ml_severity_label = classes[pred_class] if pred_class < len(classes) else deterministic_severity
+
+    # --- Compute SHAP values for contributors ---
+    try:
+        explainer = shap.TreeExplainer(booster)
+        shap_values = explainer.shap_values(df_row)
+        # shap_values is a list of arrays (one per class), we want the predicted class
+        if isinstance(shap_values, list):
+            shap_row = shap_values[pred_class][0]
+        else:
+            shap_row = shap_values[0]
+    except Exception:
+        shap_row = [0.0] * len(features)
+
+    # Build contributors from SHAP (only features with non‑zero contribution)
+    contributors = []
+    for idx, f_name in enumerate(features):
+        val = float(shap_row[idx]) if idx < len(shap_row) else 0.0
+        if abs(val) > 1e-6:
+            contributors.append({
+                "feature": f_name,
+                "display_name": get_display_name(f_name, fallback=f_name.replace("_", " ").title()),
+                "contribution": round(abs(val), 4),
+                "direction": "+" if val >= 0 else "-"
+            })
+
+    # Sort by absolute contribution descending
+    contributors = sorted(contributors, key=lambda x: x["contribution"], reverse=True)
+
+    # If no contributors (e.g., all zero), add fallback
+    if not contributors:
+        contributors = [
+            {"feature": "PHQ_Core", "display_name": "Symptom Burden Summation", "contribution": float(phq_total), "direction": "+"},
+            {"feature": "Sleep_Duration", "display_name": "Calculated Sleep Duration", "contribution": round(float(abs(7.5 - duration)), 4), "direction": "+" if duration >= 7.0 else "-"}
+        ]
 
     return {
         "domain": "domain_3_mood_sleep",
         "placement": {
             "phq9_sum": int(phq_total),
-            "severity_label": severity,
+            "severity_label": ml_severity_label,   # ML-derived
             "calculated_sleep_duration_hours": round(float(duration), 2)
         },
-        "top_contributors": [
-            {"feature": "PHQ_Core", "display_name": "Symptom Burden Summation", "contribution": float(phq_total), "direction": "+"},
-            {"feature": "Sleep_Duration", "display_name": "Calculated Sleep Duration", "contribution": round(float(abs(7.5 - duration)), 4), "direction": "+" if duration >= 7.0 else "-"}
-        ]
+        "top_contributors": contributors[:3]   # Top 3 SHAP drivers
     }
 
 # =====================================================================
