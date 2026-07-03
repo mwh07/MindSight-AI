@@ -26,48 +26,23 @@ def ensure_output_dir():
     os.makedirs(out_dir, exist_ok=True)
     return out_dir
 
-def load_domain4_models():
+def load_domain4_model():
     model_path = os.path.join(PROJECT_ROOT, "models", "saved_states", "domain4_digital_social.pkl")
     meta_path = os.path.join(PROJECT_ROOT, "models", "saved_states", "domain4_digital_social_metadata.json")
     if not os.path.exists(model_path) or not os.path.exists(meta_path):
-        alt_model = os.path.join(PROJECT_ROOT, "models", "saved_states", "domain4_multitask.pkl")
-        alt_meta = os.path.join(PROJECT_ROOT, "models", "saved_states", "domain4_multitask_metadata.json")
-        if os.path.exists(alt_model) and os.path.exists(alt_meta):
-            model_path, meta_path = alt_model, alt_meta
-        else:
-            raise FileNotFoundError("Domain 4 model files not found.")
+        raise FileNotFoundError("Domain 4 model files not found.")
 
     with open(model_path, "rb") as f:
         model_payload = pickle.load(f)
     with open(meta_path, "r") as f:
         metadata = json.load(f)
 
-    addiction_model = None
-    loneliness_model = None
-    if isinstance(model_payload, dict):
-        for key in ["addiction_model", "iat_model", "internet_addiction_model", "model_addiction", "rf_iat"]:
-            if key in model_payload:
-                addiction_model = model_payload[key]
-                break
-        for key in ["loneliness_model", "lone_model", "model_loneliness", "rf_lone"]:
-            if key in model_payload:
-                loneliness_model = model_payload[key]
-                break
-        if addiction_model is None or loneliness_model is None:
-            candidates = [v for v in model_payload.values() if hasattr(v, "predict")]
-            for cand in candidates:
-                fit_features = list(getattr(cand, "feature_names_in_", []))
-                if any(f.startswith("IAT") for f in fit_features) and addiction_model is None:
-                    addiction_model = cand
-                elif any(f.startswith("loneliness") for f in fit_features) and loneliness_model is None:
-                    loneliness_model = cand
+    if isinstance(model_payload, dict) and "depression_risk_model" in model_payload:
+        model = model_payload["depression_risk_model"]
     else:
-        raise ValueError("Model payload is not a dict; cannot extract two models.")
+        raise ValueError("Model payload does not contain 'depression_risk_model'.")
 
-    if addiction_model is None or loneliness_model is None:
-        raise ValueError("Could not resolve both addiction and loneliness models.")
-
-    return addiction_model, loneliness_model, metadata
+    return model, metadata
 
 def load_domain5_model():
     model_path = os.path.join(PROJECT_ROOT, "models", "saved_states", "domain5_burnout.json")
@@ -120,6 +95,9 @@ def generate_shap_summary_and_bar(model, X, feature_names, model_name, out_dir, 
     else:
         X_sample = X
 
+    display_names = [get_display_name(f) for f in feature_names]
+    X_sample.columns = display_names
+
     if isinstance(model, (RandomForestRegressor, xgb.XGBRegressor)):
         explainer = shap.TreeExplainer(model)
     else:
@@ -128,7 +106,7 @@ def generate_shap_summary_and_bar(model, X, feature_names, model_name, out_dir, 
     shap_values = explainer.shap_values(X_sample)
 
     plt.figure(figsize=(10, 8))
-    shap.summary_plot(shap_values, X_sample, feature_names=feature_names, show=False)
+    shap.summary_plot(shap_values, X_sample, feature_names=display_names, show=False)
     plt.tight_layout()
     save_path = os.path.join(out_dir, f"{model_name}_shap_summary.png")
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
