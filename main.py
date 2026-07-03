@@ -251,19 +251,14 @@ def run_evaluation_pipeline(custom_csv_path=None):
     
     try:
         from models.profile_aggregator import generate_full_profile
-        # from models.pdf_generator import compile_pdf_report
         
         compiled_profile = generate_full_profile(sanitized_payload)
         
         output_json_path = os.path.join(target_output_dir, f"compiled_profile_{sandbox_dir_name}.json")
-        # output_pdf_path = os.path.join(target_output_dir, f"Mindsight_Report_{sandbox_dir_name}.pdf")
         
         with open(output_json_path, "w", encoding='utf-8') as json_file:
             json.dump(compiled_profile, json_file, indent=2, cls=MindsightNumpyEncoder)
         print(f"   Captured structural data payload -> {output_json_path}")
-        
-        # compile_pdf_report(compiled_profile, output_pdf_path)
-        # print(f"   Rendered visualization profile -> {output_pdf_path}")
     except Exception as e:
         print(f" PIPELINE ERROR: Analytics evaluation run crashed: {str(e)}")
         sys.exit(1)
