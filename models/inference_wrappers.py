@@ -337,6 +337,8 @@ def evaluate_domain3_mood_sleep(raw_payload):
         # shap_values is a list of arrays (one per class), we want the predicted class
         if isinstance(shap_values, list):
             shap_row = shap_values[pred_class][0]
+        elif hasattr(shap_values, "shape") and len(shap_values.shape) == 3:
+            shap_row = shap_values[0, :, pred_class]
         else:
             shap_row = shap_values[0]
     except Exception:
