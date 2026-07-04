@@ -24,7 +24,7 @@ app = Flask(__name__)
 # Enable CORS for specific origins to prevent CSRF and external API abuse
 CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173'])
 
-DEBUG = True
+DEBUG = os.environ.get("FLASK_DEBUG", "False").lower() == "true"
 
 def debug_print(message, level="INFO"):
     """Custom debug printer"""
@@ -41,8 +41,7 @@ def test():
     return jsonify({
         'message': 'Code running perfectly here! ',
         'status': 'Server is working',
-        'timestamp': datetime.now().isoformat(),
-        'project_root': PROJECT_ROOT
+        'timestamp': datetime.now().isoformat()
     })
 
 @app.route('/health', methods=['GET'])
@@ -81,12 +80,7 @@ def health():
 
 @app.route('/assess', methods=['POST', 'OPTIONS'])
 def assess():
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
-        return response
+
 
     debug_print("=" * 60, "START")
     debug_print(" Received POST request to /assess", "INFO")
@@ -276,12 +270,8 @@ def assess():
 @app.route('/train', methods=['POST', 'OPTIONS'])
 def train_models():
     """Trigger model training"""
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
-        return response
+    if os.environ.get("ALLOW_ADMIN_ENDPOINTS", "False").lower() != "true":
+        return jsonify({'error': 'Admin endpoints disabled'}), 403
     
     debug_print(" Training endpoint called", "INFO")
     try:
@@ -304,12 +294,8 @@ def train_models():
 @app.route('/flush', methods=['POST', 'OPTIONS'])
 def flush_data():
     """Flush training data, reports, or eval directories"""
-    if request.method == 'OPTIONS':
-        response = jsonify({'status': 'ok'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        response.headers.add('Access-Control-Allow-Methods', 'POST')
-        return response
+    if os.environ.get("ALLOW_ADMIN_ENDPOINTS", "False").lower() != "true":
+        return jsonify({'error': 'Admin endpoints disabled'}), 403
     
     debug_print(" Flush endpoint called", "INFO")
     try:
@@ -392,4 +378,4 @@ if __name__ == "__main__":
     print(" Server is ready! ")
     print("=" * 80)
     
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=DEBUG, port=5000, host='0.0.0.0')

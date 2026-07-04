@@ -337,6 +337,8 @@ def evaluate_domain3_mood_sleep(raw_payload):
         # shap_values is a list of arrays (one per class), we want the predicted class
         if isinstance(shap_values, list):
             shap_row = shap_values[pred_class][0]
+        elif hasattr(shap_values, "shape") and len(shap_values.shape) == 3:
+            shap_row = shap_values[0, :, pred_class]
         else:
             shap_row = shap_values[0]
     except Exception:
@@ -379,147 +381,84 @@ def evaluate_domain3_mood_sleep(raw_payload):
 # =====================================================================
 def evaluate_domain4_multitask(raw_payload):
     """
-    Evaluates attachment, loneliness, and relationship dynamics via the trained model.
-    Drivers are sourced from real model SHAP attributions.
+    Evaluates attachment, loneliness, and relationship dynamics via a single unified model.
+    Scores for Internet Addiction and Loneliness are calculated deterministically to satisfy
+    the clinical contract. The ML model predicts Depression Risk, and its SHAP values
+    are used to isolate the cross-impact drivers of distress.
     """
-    # 1. Resolve asset paths dynamically
     model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain4_digital_social.pkl")
     meta_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain4_digital_social_metadata.json")
-    
-    if not os.path.exists(model_path) or not os.path.exists(meta_path):
-        model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain4_multitask.pkl")
-        meta_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain4_multitask_metadata.json")
 
-    def execute_contract_fallback():
+    def get_static_scores():
         iat_vals = []
         for i in range(1, 11):
-            val = raw_payload.get(f"IAT{i}", 3.0)
             try:
-                iat_vals.append(float(val))
+                iat_vals.append(float(raw_payload.get(f"IAT{i}", 3.0)))
             except (ValueError, TypeError):
                 iat_vals.append(3.0)
                 
         lone_vals = []
         for i in range(1, 7):
-            val = raw_payload.get(f"loneliness{i}", 3.0)
             try:
-                lone_vals.append(float(val))
+                lone_vals.append(float(raw_payload.get(f"loneliness{i}", 3.0)))
             except (ValueError, TypeError):
                 lone_vals.append(3.0)
                 
         pred_iat = float(np.sum(iat_vals))
         pred_lone = float(np.sum(lone_vals))
-        
-        contributors = []
-        for i, val in enumerate(iat_vals):
-            f_name = f"IAT{i+1}"
-            variance = val - 3.0
-            if variance != 0:
-                contributors.append({
-                    "feature": f_name,
-                    "display_name": get_display_name(f_name),
-                    "contribution": round(abs(variance), 4),
-                    "direction": "+" if variance >= 0 else "-"
-                })
-                
-        for i, val in enumerate(lone_vals):
-            f_name = f"loneliness{i+1}"
-            variance = val - 3.0
-            if variance != 0:
-                contributors.append({
-                    "feature": f_name,
-                    "display_name": get_display_name(f_name, fallback=f"Loneliness{i+1}"),
-                    "contribution": round(abs(variance), 4),
-                    "direction": "+" if variance >= 0 else "-"
-                })
-                
-        if not contributors:
-            contributors = [
-                {"feature": "IAT1", "display_name": get_display_name("IAT1"), "contribution": 0.0, "direction": "+"},
-                {"feature": "loneliness1", "display_name": get_display_name("loneliness1", fallback="Loneliness1"), "contribution": 0.0, "direction": "+"}
-            ]
-            
-        return {
-            "domain": "domain_4_digital_and_social",
-            "placement": {
-                "predicted_total_internet_addiction": round(pred_iat, 3),
-                "predicted_total_loneliness": round(pred_lone, 3),
-                "loneliness_score": round(pred_lone * 3.33, 3),
-                "classification": "Elevated Distress Profile" if pred_lone > 18 else "Baseline Cohort Profile",
-                "data_source": "fallback_raw_sum"
-            },
-            "top_contributors": sorted(contributors, key=lambda x: x["contribution"], reverse=True)[:3]
-        }
+        return pred_iat, pred_lone
+
+    pred_iat, pred_lone = get_static_scores()
+    base_placement = {
+        "predicted_total_internet_addiction": round(pred_iat, 3),
+        "predicted_total_loneliness": round(pred_lone, 3),
+        "loneliness_score": round(pred_lone * 3.33, 3),
+        "classification": "Elevated Distress Profile" if pred_lone > 18 else "Baseline Cohort Profile"
+    }
 
     if not os.path.exists(model_path) or not os.path.exists(meta_path):
-        return execute_contract_fallback()
-        
+        base_placement["data_source"] = "fallback_raw_sum"
+        return {
+            "domain": "domain_4_digital_and_social",
+            "placement": base_placement,
+            "top_contributors": []
+        }
+
     try:
         with open(model_path, "rb") as f:
             model_payload = pickle.load(f)
         with open(meta_path, "r") as f:
             metadata = json.load(f)
 
-        addiction_model = None
-        loneliness_model = None
-
-        if isinstance(model_payload, dict):
-            for key in ["addiction_model", "iat_model", "internet_addiction_model", "model_addiction"]:
-                if key in model_payload:
-                    addiction_model = model_payload[key]
-                    break
-            for key in ["loneliness_model", "lone_model", "model_loneliness"]:
-                if key in model_payload:
-                    loneliness_model = model_payload[key]
-                    break
-
-            if addiction_model is None or loneliness_model is None:
-                candidates = [v for v in model_payload.values() if hasattr(v, "predict")]
-                for cand in candidates:
-                    fit_features = list(getattr(cand, "feature_names_in_", []))
-                    if any(f.startswith("IAT") for f in fit_features) and addiction_model is None:
-                        addiction_model = cand
-                    elif any(f.startswith("loneliness") for f in fit_features) and loneliness_model is None:
-                        loneliness_model = cand
-                if addiction_model is None and loneliness_model is None and len(candidates) >= 2:
-                    addiction_model, loneliness_model = candidates[0], candidates[1]
+        if "depression_risk_model" in model_payload:
+            unified_model = model_payload["depression_risk_model"]
         else:
-            raise ValueError("domain4_digital_social.pkl does not contain two separate models")
+            raise ValueError("domain4_digital_social.pkl missing 'depression_risk_model'")
 
-        if addiction_model is None or loneliness_model is None:
-            raise ValueError("could not resolve both addiction and loneliness models from saved_states pickle")
-
-        def build_row_for(model):
-            fit_features = list(getattr(model, "feature_names_in_", []))
-            if not fit_features:
-                fit_features = metadata.get("features", [])
-            row = [float(raw_payload.get(f_name, 2.0)) for f_name in fit_features]
-            return pd.DataFrame([row], columns=fit_features), fit_features
-
-        df_addiction, addiction_features = build_row_for(addiction_model)
-        df_loneliness, loneliness_features = build_row_for(loneliness_model)
-
-        pred_addiction = float(addiction_model.predict(df_addiction)[0])
-        pred_loneliness_score = float(loneliness_model.predict(df_loneliness)[0])
+        features = metadata.get("features", [])
+        if not features:
+            features = list(getattr(unified_model, "feature_names_in_", []))
+        
+        row_dict = {}
+        for f_name in features:
+            row_dict[f_name] = float(raw_payload.get(f_name, 2.0 if "gender" not in f_name else 0.0))
+        
+        df_row = pd.DataFrame([row_dict], columns=features)
+        pred_depression = float(unified_model.predict(df_row)[0])
 
         contributors = []
-        for model, df_row, feat_list in [
-            (addiction_model, df_addiction, addiction_features),
-            (loneliness_model, df_loneliness, loneliness_features),
-        ]:
-            try:
-                explainer = shap.TreeExplainer(model)
-                shap_values = explainer.shap_values(df_row)
-                if isinstance(shap_values, list):
-                    row_shap = shap_values[0][0]
-                elif len(np.array(shap_values).shape) == 3:
-                    row_shap = np.array(shap_values)[0, :, 0]
-                else:
-                    row_shap = shap_values[0]
-            except Exception:
-                row_shap = [0.0] * len(feat_list)
-
-            for idx, f_name in enumerate(feat_list):
+        try:
+            explainer = shap.TreeExplainer(unified_model)
+            shap_values = explainer.shap_values(df_row)
+            
+            if isinstance(shap_values, list):
+                row_shap = shap_values[0][0]
+            elif len(np.array(shap_values).shape) == 3:
+                row_shap = np.array(shap_values)[0, :, 0]
+            else:
+                row_shap = shap_values[0]
+                
+            for idx, f_name in enumerate(features):
                 if not (f_name.startswith("IAT") or f_name.startswith("loneliness")):
                     continue
                 try:
@@ -532,25 +471,27 @@ def evaluate_domain4_multitask(raw_payload):
                     "contribution": round(float(abs(val_weight)), 4),
                     "direction": "+" if val_weight >= 0 else "-"
                 })
+        except Exception as e:
+            print(f"SHAP Error in Domain 4: {e}")
+            pass
 
-        if not contributors:
-            for i in range(1, 4):
-                contributors.append({"feature": f"IAT{i}", "display_name": get_display_name(f"IAT{i}"), "contribution": 0.0, "direction": "+"})
+        base_placement["predicted_depression_risk"] = round(pred_depression, 3)
+        base_placement["data_source"] = "unified_ml_cross_impact"
 
         return {
             "domain": "domain_4_digital_and_social",
-            "placement": {
-                "predicted_total_internet_addiction": round(pred_addiction, 3),
-                "predicted_total_loneliness": round(pred_loneliness_score, 3),
-                "loneliness_score": round(pred_loneliness_score, 3),
-                "classification": "Elevated Distress Profile" if pred_loneliness_score > 50 else "Baseline Cohort Profile",
-                "data_source": "model_prediction"
-            },
+            "placement": base_placement,
             "top_contributors": sorted(contributors, key=lambda x: x["contribution"], reverse=True)[:3]
         }
         
-    except Exception:
-        return execute_contract_fallback()
+    except Exception as e:
+        base_placement["data_source"] = "fallback_raw_sum_error"
+        return {
+            "domain": "domain_4_digital_and_social",
+            "placement": base_placement,
+            "top_contributors": []
+        }
+
         
 # =====================================================================
 # DOMAIN 5: OCCUPATIONAL BURNOUT GRADIENT ENGINE (UNTOUCHED)

@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.6",
+  "schema_version": "3.0",
   "domain": "domain_4_digital_and_social",
   "features": [
     "age",
@@ -21,43 +21,27 @@
     "loneliness5",
     "loneliness6"
   ],
-  "iat_features": [
-    "IAT1",
-    "IAT2",
-    "IAT3",
-    "IAT4",
-    "IAT5",
-    "IAT6",
-    "IAT7",
-    "IAT8",
-    "IAT9",
-    "IAT10"
-  ],
-  "loneliness_features": [
-    "loneliness1",
-    "loneliness2",
-    "loneliness3",
-    "loneliness4",
-    "loneliness5",
-    "loneliness6"
-  ],
+  "target": "totalphq",
+  "model_type": "RandomForestRegressor",
   "global_importances": {
-    "IAT1": 0.015071949506114703,
-    "IAT2": 0.14594316836737314,
-    "IAT3": 0.0501123395927431,
-    "IAT4": 0.02851552674903918,
-    "IAT5": 0.2876011635776316,
-    "IAT6": 0.08807710973820367,
-    "IAT7": 0.12377206776221049,
-    "IAT8": 0.060583463980094406,
-    "IAT9": 0.11750467487114932,
-    "IAT10": 0.08281853585544051,
-    "loneliness1": 0.033017337049638044,
-    "loneliness2": 0.12348978678526207,
-    "loneliness3": 0.174659586833757,
-    "loneliness4": 0.6009508908611929,
-    "loneliness5": 0.05551916952693536,
-    "loneliness6": 0.012363228943214531
+    "age": 0.04899911122920343,
+    "gender": 0.02349020324468781,
+    "IAT1": 0.06688712497104973,
+    "IAT2": 0.03505802921831995,
+    "IAT3": 0.13470410044192307,
+    "IAT4": 0.03318786340085494,
+    "IAT5": 0.02796183417335337,
+    "IAT6": 0.10056796766392638,
+    "IAT7": 0.058273221532618644,
+    "IAT8": 0.07112618059894196,
+    "IAT9": 0.04790201421801176,
+    "IAT10": 0.0605977276518944,
+    "loneliness1": 0.02388094845540778,
+    "loneliness2": 0.04692719642267742,
+    "loneliness3": 0.06004127417767782,
+    "loneliness4": 0.109645597388978,
+    "loneliness5": 0.033059903477252885,
+    "loneliness6": 0.017689701733220695
   },
   "clinical_cutoffs": {
     "internet_addiction": {
@@ -79,16 +63,20 @@
       ]
     },
     "loneliness": {
-      "Low Loneliness": [
-        0,
-        24
+      "Low": [
+        20,
+        34
       ],
-      "Moderate Loneliness": [
-        25,
-        44
+      "Moderate": [
+        35,
+        49
       ],
-      "High Loneliness": [
-        45,
+      "High": [
+        50,
+        64
+      ],
+      "Severe": [
+        65,
         80
       ]
     }
