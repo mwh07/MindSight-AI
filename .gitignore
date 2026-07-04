@@ -37,7 +37,7 @@ package-lock.json   # optional – some teams keep it, but you can ignore if you
 # ======================
 reports/
 results/
-docs/report.tex
+docs/Project_Report/
 # *.csv
 # *.pdf
 # *.json
