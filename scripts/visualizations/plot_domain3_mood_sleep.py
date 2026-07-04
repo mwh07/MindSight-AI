@@ -93,14 +93,19 @@ def main():
     for i in range(kmeans.n_clusters):
         cluster_data = X[X["Cluster"] == i]
         label = cluster_profiles.get(str(i), f"Cluster {i}")
+        
+        # Add jitter to reveal data density (prevent thousands of points overlapping on integers)
+        jitter_x = cluster_data["phq9_sum"] + np.random.uniform(-0.3, 0.3, size=len(cluster_data))
+        jitter_y = cluster_data["calculated_sleep_duration"] + np.random.uniform(-0.3, 0.3, size=len(cluster_data))
+        
         plt.scatter(
-            cluster_data["phq9_sum"], 
-            cluster_data["calculated_sleep_duration"], 
-            alpha=0.6, 
+            jitter_x, 
+            jitter_y, 
+            alpha=0.4, 
+            s=20,  # Slightly smaller dots
             c=colors[i % len(colors)],
             label=label,
-            edgecolors='w',
-            linewidth=0.5
+            edgecolors='none'
         )
         
         # Plot centroid
