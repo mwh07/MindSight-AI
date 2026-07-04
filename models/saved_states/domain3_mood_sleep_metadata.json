@@ -1,123 +1,18 @@
 {
-    "schema_version": "2.6",
+    "schema_version": "3.0",
     "domain": "domain_3_mood_and_sleep",
+    "model_type": "KMeans_Clustering",
     "features": [
-        "DPQ010",
-        "DPQ020",
-        "DPQ030",
-        "DPQ040",
-        "DPQ050",
-        "DPQ060",
-        "DPQ070",
-        "DPQ080",
-        "DPQ090",
-        "DPQ100",
-        "bed_hours",
-        "wake_hours",
+        "phq9_sum",
         "calculated_sleep_duration"
     ],
-    "input_schema_features": [
-        "DPQ010",
-        "DPQ020",
-        "DPQ030",
-        "DPQ040",
-        "DPQ050",
-        "DPQ060",
-        "DPQ070",
-        "DPQ080",
-        "DPQ090",
-        "DPQ100",
-        "SLQ300",
-        "SLQ310"
-    ],
-    "dpq_cols": [
-        "DPQ010",
-        "DPQ020",
-        "DPQ030",
-        "DPQ040",
-        "DPQ050",
-        "DPQ060",
-        "DPQ070",
-        "DPQ080",
-        "DPQ090",
-        "DPQ100"
-    ],
-    "feature_importance": [
-        {
-            "feature": "DPQ020",
-            "contribution": 12446.16685725181,
-            "direction": "+"
-        },
-        {
-            "feature": "DPQ010",
-            "contribution": 9559.218380295351,
-            "direction": "+"
-        },
-        {
-            "feature": "DPQ040",
-            "contribution": 7384.12896771243,
-            "direction": "+"
-        },
-        {
-            "feature": "DPQ030",
-            "contribution": 6919.0472845811255,
-            "direction": "+"
-        },
-        {
-            "feature": "DPQ050",
-            "contribution": 6918.631594628205,
-            "direction": "+"
-        },
-        {
-            "feature": "DPQ060",
-            "contribution": 5423.117443676205,
-            "direction": "+"
-        },
-        {
-            "feature": "DPQ070",
-            "contribution": 5241.066415206447,
-            "direction": "+"
-        },
-        {
-            "feature": "DPQ080",
-            "contribution": 2544.376367426585,
-            "direction": "+"
-        },
-        {
-            "feature": "DPQ090",
-            "contribution": 1559.5063881269343,
-            "direction": "+"
-        },
-        {
-            "feature": "DPQ100",
-            "contribution": 1276.1602136405263,
-            "direction": "+"
-        },
-        {
-            "feature": "bed_hours",
-            "contribution": 183.63179603870458,
-            "direction": "+"
-        },
-        {
-            "feature": "calculated_sleep_duration",
-            "contribution": 167.98265580693624,
-            "direction": "+"
-        },
-        {
-            "feature": "wake_hours",
-            "contribution": 137.2941601734201,
-            "direction": "+"
-        }
-    ],
-    "execution_mode": "native_lightgbm",
-    "classes": [
-        "Minimal",
-        "Mild",
-        "Moderate",
-        "Moderately Severe",
-        "Severe"
-    ],
-    "severity_bounds": {
+    "cluster_profiles": {
+        "0": "Minimal Distress with Optimal Sleep",
+        "1": "Moderate Distress with Optimal Sleep",
+        "2": "Minimal Distress with Hypersomnia",
+        "3": "Mild Distress with Sleep Deprivation"
+    },
+    "clinical_cutoffs": {
         "Minimal": [
             0,
             4

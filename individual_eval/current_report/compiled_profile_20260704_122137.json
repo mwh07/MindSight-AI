@@ -1,0 +1,246 @@
+{
+  "schema_version": "4.0",
+  "id_no": "MS-20260704_122152-ANONYMOUS",
+  "age": 22,
+  "sex": "Male",
+  "domain_scores": {
+    "domain_1_personality": {
+      "domain": "domain_1_personality",
+      "placement": {
+        "extraversion": 0.7,
+        "emotional_stability": 0.0,
+        "agreeableness": 0.7,
+        "conscientiousness": 0.4,
+        "openness": 1.0
+      },
+      "top_contributors": [
+        {
+          "feature": "Openness",
+          "display_name": "Openness Vector",
+          "contribution": 1.0,
+          "direction": "+",
+          "relative_magnitude": 41.7
+        },
+        {
+          "feature": "Extraversion",
+          "display_name": "Extraversion Vector",
+          "contribution": 0.7,
+          "direction": "+",
+          "relative_magnitude": 29.2
+        },
+        {
+          "feature": "Agreeableness",
+          "display_name": "Agreeableness Vector",
+          "contribution": 0.7,
+          "direction": "+",
+          "relative_magnitude": 29.2
+        }
+      ],
+      "severity_tier": "descriptive",
+      "domain_summary": "Most shaped by openness and extraversion.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": -4.0,
+        "max": 4.0
+      }
+    },
+    "domain_2_self_esteem": {
+      "domain": "domain_2_self_esteem",
+      "placement": {
+        "score": 19,
+        "max_possible_score": 40,
+        "classification": "Normal"
+      },
+      "top_contributors": [
+        {
+          "feature": "Q10",
+          "display_name": "Negative Self-Evaluation",
+          "contribution": 1.0,
+          "direction": "-",
+          "relative_magnitude": 100.0
+        },
+        {
+          "feature": "Q1",
+          "display_name": "General Self-Worth",
+          "contribution": 0.0,
+          "direction": "+",
+          "relative_magnitude": 0.0
+        },
+        {
+          "feature": "Q2",
+          "display_name": "Acknowledgment of Personal Strengths",
+          "contribution": 0.0,
+          "direction": "+",
+          "relative_magnitude": 0.0
+        }
+      ],
+      "severity_tier": "low",
+      "domain_summary": "Self-esteem (normal) was most influenced by negative self-evaluation and general self-worth.",
+      "scale_reference": {
+        "type": "fixed_range",
+        "min": 0,
+        "max": 40
+      }
+    },
+    "domain_3_mood_sleep": {
+      "domain": "domain_3_mood_sleep",
+      "placement": {
+        "phq9_sum": 13,
+        "severity_label": "Moderate Depression",
+        "calculated_sleep_duration_hours": 7.67,
+        "clinical_phenotype": "Moderate Distress with Optimal Sleep"
+      },
+      "top_contributors": [
+        {
+          "feature": "DPQ010",
+          "display_name": "Anhedonia / Lack of Pleasure in Activities",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "DPQ030",
+          "display_name": "Sleep Disruption (Insomnia / Hypersomnia)",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        },
+        {
+          "feature": "DPQ070",
+          "display_name": "Cognitive Slowing / Impaired Concentration",
+          "contribution": 2.0,
+          "direction": "+",
+          "relative_magnitude": 33.3
+        }
+      ],
+      "severity_tier": "moderate",
+      "domain_summary": "Moderate Depression mood signal, driven mainly by anhedonia / lack of pleasure in activities and sleep disruption (insomnia / hypersomnia).",
+      "scale_reference": {
+        "phq9_sum": {
+          "type": "fixed_range",
+          "min": 0,
+          "max": 27
+        },
+        "sleep_duration_hours": {
+          "type": "reference_band",
+          "low": 7.0,
+          "high": 9.0
+        }
+      }
+    },
+    "domain_4_digital_and_social": {
+      "domain": "domain_4_digital_and_social",
+      "placement": {
+        "predicted_total_internet_addiction": 25.0,
+        "predicted_total_loneliness": 15.0,
+        "loneliness_score": 49.95,
+        "classification": "Baseline Cohort Profile",
+        "predicted_depression_risk": 13.509,
+        "data_source": "unified_ml_cross_impact"
+      },
+      "top_contributors": [
+        {
+          "feature": "IAT6",
+          "display_name": "Academic or Work Output Decline",
+          "contribution": 1.8976,
+          "direction": "+",
+          "relative_magnitude": 56.8
+        },
+        {
+          "feature": "IAT8",
+          "display_name": "Social Over-Allocation Online",
+          "contribution": 0.7631,
+          "direction": "+",
+          "relative_magnitude": 22.8
+        },
+        {
+          "feature": "IAT10",
+          "display_name": "Preoccupation with Reconnecting",
+          "contribution": 0.6828,
+          "direction": "+",
+          "relative_magnitude": 20.4
+        }
+      ],
+      "severity_tier": "moderate",
+      "domain_summary": "Loneliness and digital-use signals were most influenced by academic or work output decline and social over-allocation online.",
+      "scale_reference": {
+        "predicted_total_internet_addiction": null,
+        "predicted_total_loneliness": null,
+        "loneliness_score": null
+      }
+    },
+    "domain_5_occupational_burnout": {
+      "domain": "domain_5_occupational_burnout",
+      "placement": {
+        "burnout_index": 2.877,
+        "burnout_tier_label": "Low / Controlled Engagement Profile",
+        "tier_thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
+      },
+      "top_contributors": [
+        {
+          "feature": "stress_score",
+          "display_name": "General Perceived Stress Load",
+          "contribution": 4.1039,
+          "direction": "-",
+          "relative_magnitude": 73.8
+        },
+        {
+          "feature": "work_hours_per_week",
+          "display_name": "Weekly Professional Output Hours",
+          "contribution": 1.0393,
+          "direction": "+",
+          "relative_magnitude": 18.7
+        },
+        {
+          "feature": "deadline_pressure_score",
+          "display_name": "Imminent Milestone / Schedule Stress",
+          "contribution": 0.4159,
+          "direction": "+",
+          "relative_magnitude": 7.5
+        }
+      ],
+      "severity_tier": "low",
+      "domain_summary": "Low / Controlled Engagement Profile, driven mainly by general perceived stress load and weekly professional output hours.",
+      "scale_reference": {
+        "type": "tier_thresholds",
+        "thresholds": {
+          "low_to_moderate": 3.5,
+          "moderate_to_high": 5.5,
+          "high_to_severe": 7.0
+        }
+      }
+    },
+    "domain_6_severe_clinical": {
+      "domain": "domain_6_severe_clinical",
+      "placement": {
+        "predicted_condition_code": 1,
+        "predicted_condition_label": "Mild Symptomatic Profile",
+        "anomaly_review_flag": false
+      },
+      "top_contributors": [
+        {
+          "feature": "unwanted_thoughts",
+          "display_name": "Intrusive Cognitive Distortions",
+          "contribution": 7.1528,
+          "direction": "+",
+          "relative_magnitude": 100.0
+        }
+      ],
+      "severity_tier": "moderate",
+      "domain_summary": "Mild Symptomatic Profile, most associated with intrusive cognitive distortions.",
+      "scale_reference": null
+    }
+  },
+  "global_synthesis": "CLINICAL MOOD SIGNAL: Assessment reports active, moderate symptoms of mood disruption falling within the Moderate Depression classification, with secondary checks mapping close to the Mild Symptomatic Profile. While general adaptive functioning remains intact, implementing proactive stress-management strategies and routine wellness monitoring is recommended to prevent symptom escalation.",
+  "plain_language_summary": {
+    "opening": "Overall, this looks like a generally steady profile with one or two areas worth keeping an eye on.",
+    "domain_recap": "Across the six areas measured, their openness stands out as notably higher than their other traits; self-esteem scored 19 out of 40 (normal); a PHQ-9 mood screening score of 13 (moderate depression), with about 7.7 hours of sleep; elevated loneliness signals alongside an internet-use pattern score of 25; and a low / controlled engagement profile (index 2.9) in their work life.",
+    "closing": "No immediate concerns stand out, but routine check-ins on mood, sleep, and workload are always worthwhile.",
+    "recommend_professional_help": false,
+    "full_text": "Overall, this looks like a generally steady profile with one or two areas worth keeping an eye on. Across the six areas measured, their openness stands out as notably higher than their other traits; self-esteem scored 19 out of 40 (normal); a PHQ-9 mood screening score of 13 (moderate depression), with about 7.7 hours of sleep; elevated loneliness signals alongside an internet-use pattern score of 25; and a low / controlled engagement profile (index 2.9) in their work life. No immediate concerns stand out, but routine check-ins on mood, sleep, and workload are always worthwhile."
+  }
+}
