@@ -5,11 +5,11 @@ import { motion } from "framer-motion";
 
 const dimensions = [
   { icon: Brain, title: "Personality", desc: "Big Five traits assessment via Graded Response Model (GRM)", color: "bg-indigo-500/10 text-indigo-500" },
-  { icon: Shield, title: "Self-Esteem", desc: "Rosenberg scale evaluating self-worth and confidence", color: "bg-sky-500/10 text-sky-500" },
-  { icon: Moon, title: "Mood & Sleep", desc: "PHQ-9 validation and sleep duration analysis via LightGBM", color: "bg-emerald-500/10 text-emerald-500" },
-  { icon: Users, title: "Digital & Social Risk", desc: "Internet addiction and loneliness modeled via Random Forest", color: "bg-purple-500/10 text-purple-500" },
-  { icon: Briefcase, title: "Occupational Burnout", desc: "Workplace stress evaluation utilizing XGBoost", color: "bg-amber-500/10 text-amber-500" },
-  { icon: Stethoscope, title: "Clinical Screening", desc: "OCD-spectrum screening via Logistic Regression & Isolation Forest", color: "bg-rose-500/10 text-rose-500" },
+  { icon: Shield, title: "Self-Esteem", desc: "Demographic norm-referenced scoring for clinical self-worth", color: "bg-sky-500/10 text-sky-500" },
+  { icon: Moon, title: "Mood & Sleep", desc: "Unsupervised K-Means clustering identifying distinct phenotypes", color: "bg-emerald-500/10 text-emerald-500" },
+  { icon: Users, title: "Digital & Social Risk", desc: "Cross-impact analysis for depression risk via Random Forest", color: "bg-purple-500/10 text-purple-500" },
+  { icon: Briefcase, title: "Occupational Burnout", desc: "Monotonic ordinal and quantile mapping via XGBoost", color: "bg-amber-500/10 text-amber-500" },
+  { icon: Stethoscope, title: "Clinical Screening", desc: "Multinomial Logit classification & Anomaly Detection", color: "bg-rose-500/10 text-rose-500" },
 ];
 
 export default function DimensionsSection() {

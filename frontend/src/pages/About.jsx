@@ -11,10 +11,10 @@ import FooterSection from "../components/landing/FooterSection";
 const steps = [
   { icon: Layers, title: "70-Item Input Data", desc: "Responses are collected via the IMP-70 framework covering 6 psychological domains." },
   { icon: GitBranch, title: "Parallel Extraction", desc: "Each of the six domains independently extracts its required subset of features without contamination." },
-  { icon: Brain, title: "Decoupled Inference", desc: "Domain-specific algorithms (GRM, LightGBM, Random Forest, etc.) execute in parallel." },
-  { icon: Cpu, title: "Outlier Detection", desc: "Isolation Forests independently flag atypical response patterns to ensure data integrity." },
-  { icon: BarChart3, title: "Profile Aggregation", desc: "Independent predictions are merged and severity levels are cross-referenced." },
-  { icon: Shield, title: "Diagnostic Reporting", desc: "A synthesized global profile and clinical narrative are generated into a final report." },
+  { icon: Brain, title: "Decoupled Inference", desc: "Domain-specific algorithms (GRM, XGBoost, Random Forest, K-Means) execute in parallel." },
+  { icon: Cpu, title: "Outlier Detection", desc: "Isolation Forests independently flag atypical clinical response patterns to ensure data integrity." },
+  { icon: BarChart3, title: "Profile Aggregation", desc: "Independent predictions are merged and severity levels are cross-referenced dynamically." },
+  { icon: Shield, title: "Diagnostic Reporting", desc: "A synthesized global profile and plain-language narrative are generated into a final report." },
 ];
 
 const team = [
@@ -80,13 +80,13 @@ export default function About() {
             <h2 className="text-2xl font-display font-bold text-center mb-10 text-foreground">Key Technical Innovations</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               {[
-                "Decoupled multi-domain orchestration engine for parallel inference",
-                "Zero-contamination pure-vector extraction ensuring strict data isolation",
+                "Parallel inference pipelines for independent domain evaluation",
+                "Strict data isolation architecture to prevent cross-domain feature leakage",
                 "Item Response Theory (GRM) for nuanced latent trait measurement",
-                "Gradient Boosting (LightGBM & XGBoost) for structured clinical data",
-                "Dual Random Forest regressors isolating distinct behavioral risks",
-                "Logistic Regression paired with Isolation Forests for outlier detection",
-                "Seamless synthesis of six dimensions into a cohesive clinical profile",
+                "Monotonic XGBoost modeling (Ordinal & Quantile) for occupational health",
+                "Dual Random Forest regressors isolating distinct behavioral cross-impacts",
+                "Multinomial Logistic Regression paired with Isolation Forests for cluster analysis",
+                "Unsupervised K-Means clustering mapping distinct mood and sleep phenotypes",
                 "Rigorous deterministic scoring aligned with validated psychometric scales",
               ].map((item, i) => (
                 <motion.div

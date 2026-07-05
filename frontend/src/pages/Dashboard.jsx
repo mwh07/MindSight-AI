@@ -151,13 +151,18 @@ export default function Dashboard() {
 
   // --- Domain status cards ---
   const domainCards = useMemo(() => {
+    // Helper to determine clinical severity status safely
+    const isClinicalHealthy = clinicalData.predicted_condition_code == 0 || 
+                              clinicalData.predicted_condition_code === "0" || 
+                              clinicalData.predicted_condition_code === "No_Detectable_Signal";
+
     return [
       {
         id: "domain_1_personality",
         name: "Personality",
         icon: Brain,
         status: "Completed",
-        color: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+        color: "bg-indigo-500/10 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 ring-1 ring-indigo-500/20",
         description: "5 traits analyzed"
       },
       {
@@ -166,8 +171,8 @@ export default function Dashboard() {
         icon: Shield,
         status: selfEsteemData.classification || "Unknown",
         color: selfEsteemData.classification === "Normal" 
-          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-          : "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+          ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 ring-1 ring-emerald-500/20"
+          : "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 ring-1 ring-amber-500/20",
         description: `${selfEsteemData.score || 0}/${selfEsteemData.max_possible_score || 40}`
       },
       {
@@ -176,18 +181,18 @@ export default function Dashboard() {
         icon: Moon,
         status: moodData.severity_label || "Unknown",
         color: moodData.phq9_sum <= 4 
-          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+          ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 ring-1 ring-emerald-500/20"
           : moodData.phq9_sum <= 9 
-          ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-          : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
+          ? "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 ring-1 ring-amber-500/20"
+          : "bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 ring-1 ring-rose-500/20",
         description: `PHQ-9: ${moodData.phq9_sum || 0}`
       },
       {
         id: "domain_4_digital_and_social",
         name: "Digital & Social",
         icon: Users,
-        status: digitalData.classification || "Unknown",
-        color: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+        status: digitalData.classification || "Analyzed",
+        color: "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 ring-1 ring-purple-500/20",
         description: `IA: ${digitalData.predicted_total_internet_addiction || 0}`
       },
       {
@@ -196,10 +201,10 @@ export default function Dashboard() {
         icon: Briefcase,
         status: burnoutData.burnout_tier_label || "Unknown",
         color: burnoutData.burnout_index <= 4 
-          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+          ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 ring-1 ring-emerald-500/20"
           : burnoutData.burnout_index <= 6 
-          ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-          : "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
+          ? "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 ring-1 ring-amber-500/20"
+          : "bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 ring-1 ring-rose-500/20",
         description: `Index: ${burnoutData.burnout_index || 0}`
       },
       {
@@ -207,9 +212,9 @@ export default function Dashboard() {
         name: "Clinical Severity",
         icon: Stethoscope,
         status: clinicalData.predicted_condition_label || "Unknown",
-        color: clinicalData.predicted_condition_code === 1 
-          ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-          : "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+        color: isClinicalHealthy
+          ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 ring-1 ring-emerald-500/20"
+          : "bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400 ring-1 ring-amber-500/20",
         description: `Code: ${clinicalData.predicted_condition_code || 0}`
       },
     ];
@@ -218,21 +223,26 @@ export default function Dashboard() {
   // --- Recommendations (using consistent fields) ---
   const getRecommendations = () => {
     const recs = [];
-    const personality = domainScores.domain_1_personality?.placement || {};
-    if (personality.extraversion < -0.2) recs.push("Consider social activities to gradually increase extraversion");
-    if (personality.emotional_stability < 0.3) recs.push("Practice emotional regulation techniques and mindfulness");
-    if (personality.conscientiousness < 0.3) recs.push("Use organizational tools and set small daily goals");
-    if (selfEsteemData.score < 20) recs.push("Practice positive self-affirmations and challenge negative thoughts");
-    if (moodData.phq9_sum >= 5) {
+    const personality = domainScores?.domain_1_personality?.placement || {};
+    if (personality.extraversion !== undefined && personality.extraversion < -0.2) recs.push("Consider social activities to gradually increase extraversion");
+    if (personality.emotional_stability !== undefined && personality.emotional_stability < 0.3) recs.push("Practice emotional regulation techniques and mindfulness");
+    if (personality.conscientiousness !== undefined && personality.conscientiousness < 0.3) recs.push("Use organizational tools and set small daily goals");
+    
+    if (selfEsteemData?.score !== undefined && selfEsteemData.score < 20) recs.push("Practice positive self-affirmations and challenge negative thoughts");
+    
+    if (moodData?.phq9_sum !== undefined && moodData.phq9_sum >= 5) {
       recs.push("Consider speaking with a mental health professional about mood symptoms");
       recs.push("Establish a consistent sleep schedule and exercise routine");
     }
-    if ((digitalData.loneliness_score || 0) > 50) recs.push("Consider professional support for loneliness and social connection");
-    if ((digitalData.predicted_total_internet_addiction || 0) > 50) recs.push("Set screen time limits and take regular digital breaks");
-    if (burnoutData.burnout_index > 4) {
+    
+    if (digitalData?.loneliness_score !== undefined && digitalData.loneliness_score > 50) recs.push("Consider professional support for loneliness and social connection");
+    if (digitalData?.predicted_total_internet_addiction !== undefined && digitalData.predicted_total_internet_addiction > 50) recs.push("Set screen time limits and take regular digital breaks");
+    
+    if (burnoutData?.burnout_index !== undefined && burnoutData.burnout_index > 4) {
       recs.push("Prioritize work-life balance and set clear boundaries");
       recs.push("Take regular breaks and practice stress management techniques");
     }
+    
     return recs.length > 0 ? recs : [
       "Maintain your current healthy habits and continue monitoring",
       "Regular self-care and mindfulness practices are recommended"
@@ -288,7 +298,7 @@ export default function Dashboard() {
 
   // --- MAIN RENDER ---
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-background/50">
       <Navbar />
       <main className="page-shell flex-1">
         <div className="page-container">
@@ -298,31 +308,35 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8"
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-4 border-b border-border/40"
         >
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-xl border border-primary/20">
-                <Brain className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground tracking-tight">
-                  MINDSIGHT Dashboard
-                </h1>
-                <p className="text-muted-foreground text-sm mt-1">
-                  ID: <span className="font-medium text-foreground">{idNo}</span> · {age} yrs · {sex} · v{schemaVersion}
-                </p>
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
+              <Brain className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">
+                MINDSIGHT Dashboard
+              </h1>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5 font-medium">
+                <span className="bg-secondary/50 px-2 py-0.5 rounded text-foreground">{idNo}</span>
+                <span>•</span>
+                <span>{age} yrs</span>
+                <span>•</span>
+                <span>{sex}</span>
+                <span>•</span>
+                <span className="text-[10px] uppercase tracking-widest text-primary/70">v{schemaVersion}</span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="outline" className="px-4 py-2 bg-background/50 backdrop-blur-sm shadow-sm">
-              <Calendar className="w-4 h-4 mr-2 text-primary" />
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="px-3 py-1 bg-background/50 backdrop-blur-sm shadow-sm text-xs border-border/50">
+              <Calendar className="w-3.5 h-3.5 mr-1.5 text-primary" />
               {format(new Date(), "MMM d, yyyy")}
             </Badge>
             <Link to="/assessment">
-              <Button className="rounded-full gap-2 shadow-md hover:shadow-lg transition-all">
-                <Plus className="w-4 h-4" /> New Assessment
+              <Button size="sm" className="rounded-md gap-1.5 shadow-sm hover:shadow-md transition-all h-8 text-xs font-semibold px-3">
+                <Plus className="w-3.5 h-3.5" /> New
               </Button>
             </Link>
           </div>
@@ -421,8 +435,9 @@ export default function Dashboard() {
                   <Activity className={`w-6 h-6 ${moodData.phq9_sum <= 4 ? 'text-emerald-600 dark:text-emerald-400' : moodData.phq9_sum <= 9 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Depression Level</p>
-                  <p className="text-xl font-semibold text-foreground mt-1">{moodData.severity_label || "Unknown"}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Clinical Phenotype</p>
+                  <p className="text-lg font-semibold text-foreground mt-1 leading-tight">{moodData.clinical_phenotype || moodData.severity_label || "Unknown"}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 italic">Our K-Means ML algorithm analyzed your sleep quality and mood symptoms to categorize your specific clinical profile.</p>
                 </div>
               </div>
             </CardContent>
@@ -475,9 +490,26 @@ export default function Dashboard() {
                     />
                   </div>
                 </div>
+                {digitalData.predicted_depression_risk !== undefined && (
+                  <div>
+                    <div className="flex justify-between items-end mb-2">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-foreground text-rose-500">Cross-Impact Depression Risk</span>
+                        <span className="text-[11px] text-muted-foreground italic mt-0.5">A Random Forest AI predicts your depression risk based strictly on how your screen-time and social isolation interact.</span>
+                      </div>
+                      <span className="font-semibold text-rose-500">{digitalData.predicted_depression_risk.toFixed(1)}/30</span>
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden shadow-inner">
+                      <div 
+                        className="bg-rose-500 h-full rounded-full transition-all duration-1000"
+                        style={{ width: `${Math.min((digitalData.predicted_depression_risk / 30) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="pt-2">
-                  <Badge variant="secondary" className="font-medium">
-                    {digitalData.classification || "Unknown"}
+                  <Badge variant="secondary" className="font-medium bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20">
+                    {digitalData.classification || "Analyzed"}
                   </Badge>
                 </div>
               </div>
@@ -532,11 +564,11 @@ export default function Dashboard() {
             <CardContent className="flex flex-col justify-between h-[200px] pb-4">
               <div className="flex items-start gap-4">
                 <div className={`p-2.5 rounded-xl ${
-                  clinicalData.predicted_condition_code === 1 
+                  (clinicalData.predicted_condition_code == 0 || clinicalData.predicted_condition_code === "0" || clinicalData.predicted_condition_code === "No_Detectable_Signal")
                     ? "bg-emerald-500/10 border border-emerald-500/20" 
                     : "bg-amber-500/10 border border-amber-500/20"
                 } inline-block shadow-sm`}>
-                  {clinicalData.predicted_condition_code === 1 ? (
+                  {(clinicalData.predicted_condition_code == 0 || clinicalData.predicted_condition_code === "0" || clinicalData.predicted_condition_code === "No_Detectable_Signal") ? (
                     <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                   ) : (
                     <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
@@ -544,18 +576,18 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h4 className="text-md font-bold text-foreground">{clinicalData.predicted_condition_label || "Unknown"}</h4>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Diagnostic Code: {clinicalData.predicted_condition_code || 0}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs text-muted-foreground">
+                      Diagnostic Code: {clinicalData.predicted_condition_code || 0}
+                    </p>
+                    {clinicalData.anomaly_review_flag && (
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30 px-1.5 py-0 text-[10px]">
+                        <AlertCircle className="w-3 h-3 mr-1 inline-block" /> Anomaly Flag
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
-              {clinicalData.anomaly_review_flag && (
-                <div>
-                  <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30 px-2 py-0.5 shadow-sm text-xs">
-                    <AlertCircle className="w-3 h-3 mr-1 inline-block" /> Anomaly Review Recommended
-                  </Badge>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -577,7 +609,7 @@ export default function Dashboard() {
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Side: Sidebar menu tabs */}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
                   {allContributors.map((item) => {
                     const TabIcon = item.icon || Info;
                     const isActive = activeDomainKey === item.key;
@@ -585,7 +617,7 @@ export default function Dashboard() {
                       <div
                         key={item.key}
                         onClick={() => setActiveDomainKey(item.key)}
-                        className={`p-4 flex items-center justify-between cursor-pointer rounded-xl border transition-all duration-200 ${
+                        className={`p-3 flex items-center justify-between cursor-pointer rounded-xl border transition-all duration-200 ${
                           isActive 
                             ? "bg-primary/5 border-primary/40 text-primary shadow-sm ring-1 ring-primary/20" 
                             : "bg-card hover:bg-secondary/20 border-border/60 text-foreground"
@@ -634,7 +666,7 @@ export default function Dashboard() {
                           <h5 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
                             <Info className="w-4 h-4 text-primary" /> Overview Summary
                           </h5>
-                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-line bg-secondary/10 p-5 rounded-xl border border-border/30">
+                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-line bg-secondary/10 p-4 rounded-xl border border-border/30">
                             {activeDomain.summary || "No description summary available for this domain."}
                           </p>
                         </div>
@@ -645,7 +677,7 @@ export default function Dashboard() {
                             <BarChart3 className="w-4 h-4 text-accent" /> Key Influencing Drivers
                           </h5>
                           {activeDomain.contributors.length > 0 ? (
-                            <div className="space-y-4 bg-secondary/10 p-5 rounded-xl border border-border/30">
+                            <div className="space-y-4 bg-secondary/10 p-4 rounded-xl border border-border/30">
                               {activeDomain.contributors.map((c, idx) => (
                                 <div key={idx}>
                                   <div className="flex justify-between items-center text-xs">

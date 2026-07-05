@@ -38,8 +38,7 @@ export default function HeroSection() {
             transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
             className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
           >
-            MINDSIGHT leverages a Unified Multi-Domain Psychological Diagnostic Profiling System to provide comprehensive, 
-            multidimensional psychological insights with rigorous reliability.
+            MINDSIGHT synthesizes 70 clinical data points into a cohesive, highly reliable psychological profile, combining advanced machine learning with established psychometric standards.
           </motion.p>
 
           <motion.div

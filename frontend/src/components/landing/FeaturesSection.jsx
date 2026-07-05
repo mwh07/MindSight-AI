@@ -7,32 +7,32 @@ const features = [
   {
     icon: Layers,
     title: "Parallel Domain Architecture",
-    description: "Executes six independent domain models simultaneously via a decoupled inference engine.",
+    description: "Evaluates six core psychological domains independently without cross-contamination.",
   },
   {
     icon: Brain,
     title: "Multi-Model Orchestration",
-    description: "Utilizes LightGBM, XGBoost, Random Forest, and Logistic Regression tailored to each domain.",
+    description: "Utilizes XGBoost, Random Forest, K-Means, and Multinomial Logit tailored to each domain.",
   },
   {
     icon: ShieldCheck,
     title: "Psychometric Validity",
-    description: "Applies Graded Response Models (GRM-IRT) for advanced latent trait measurement.",
+    description: "Uses validated Item Response Theory (GRM) to measure underlying personality traits.",
   },
   {
     icon: Eye,
-    title: "Zero-Contamination Extraction",
-    description: "Guarantees pure-vector feature extraction preventing cross-domain data leakage.",
+    title: "Strict Data Isolation",
+    description: "Enforces rigid boundaries, ensuring answers from one domain don't artificially inflate another.",
   },
   {
     icon: BarChart3,
     title: "Global Synthesis",
-    description: "Aggregates independent predictions into a cohesive, clinically interpretable narrative profile.",
+    description: "Compiles all domain-specific risk scores into a unified, easy-to-read clinical summary.",
   },
   {
     icon: Cpu,
     title: "Robust Outlier Detection",
-    description: "Employs Isolation Forests to independently flag atypical response patterns.",
+    description: "Automatically flags inconsistent or anomalous response patterns to maintain data integrity.",
   },
 ];
 
