@@ -122,6 +122,8 @@ def execute_training_submodule(script_relative_path, step_description):
             output_line = process.stdout.readline()
             if output_line == '' and process.poll() is not None:
                 break
+            if output_line:
+                print(output_line, end='')
         return process.poll() == 0
     except Exception as e:
         print(f"   SYSTEM EXCEPTION: Calibration fault: {str(e)}")

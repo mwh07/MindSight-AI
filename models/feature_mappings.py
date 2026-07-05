@@ -84,5 +84,7 @@ FEATURE_TRANSLATION_MAP = {
     "mind_going_blank": "Acute Cognitive Blocking under Stress",
     "avoidance_social_activity": "Active Social Withdrawal / Avoidance",
     "panic": "Somatic Panic Sensations",
-    "hypervigilance": "Autonomic Hyperarousal & Guardedness"
+    "hypervigilance": "Autonomic Hyperarousal & Guardedness",
+    "sleep_disturbances": "Severe Sleep Pattern Disruption",
+    "low_energy": "Profound Depletion of Energy"
 }
