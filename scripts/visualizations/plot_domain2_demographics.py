@@ -22,7 +22,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from plot_utils import ensure_output_dir
+# ========== NEW: We no longer need plot_utils for output dir ==========
+# from plot_utils import ensure_output_dir   # <-- REMOVED
 
 def calculate_rses_scores(df):
     """Calculate the Rosenberg Self-Esteem Score (0-40 scale) using vectorized numpy arrays."""
@@ -53,7 +54,10 @@ def map_gender(val):
 
 def main():
     print("\n📊 Domain 2 — Self-Esteem Demographics (KDE Distributions)")
-    out_dir = ensure_output_dir()
+    
+    # ========== NEW: Define dedicated output subfolder ==========
+    out_dir = os.path.join(PROJECT_ROOT, "results", "aggregate_analysis", "domain2_demographics")
+    os.makedirs(out_dir, exist_ok=True)
     
     dataset_path = os.path.join(PROJECT_ROOT, "datasets", "rosenberg_self_esteem_clean.csv")
     if not os.path.exists(dataset_path):

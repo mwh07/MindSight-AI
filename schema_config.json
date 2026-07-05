@@ -1,6 +1,7 @@
 {
-  "schema_version": "2.6",
-  "total_features": 70,
+  "schema_version": "3.0",
+  "total_features": 72,
+  "total_features_note": "Sum of each domain's feature-list length below is 76. total_features reports 72 because 'age' and 'gender' are shared demographic fields collected once but referenced by 3 domains each (domain_2, domain_4, domain_5 for age; domain_2, domain_4, domain_5 for gender) -- this count deduplicates them (76 - 4 = 72) rather than counting each domain's reference separately. This convention was implicit in schema_version 2.6 (70 = 74 - 4 under the same logic); it is now stated explicitly to avoid future drift/confusion.",
   "domains": {
     "domain_1_personality": {
       "dataset_source": "big_five_personality_clean.csv",
@@ -39,6 +40,7 @@
     },
     "domain_5_occupational_burnout": {
       "dataset_source": "tech_burnout_2026_clean.csv",
+      "dataset_note": "Synthetic Kaggle dataset, not real occupational survey data. stress_score correlates with the burnout_score label at r=0.854 (R^2=0.73) -- almost certainly reflects the label's synthetic construction rather than a validated real-world relationship. See MODEL_ARCHITECTURES.md Key Notes for Domain 5.",
       "features": [
         "age",
         "gender",
@@ -50,10 +52,12 @@
         "autonomy_score", 
         "stress_score",
         "social_support_score"
-      ]
+      ],
+      "engineered_features_note": "3 additional features (stress_x_support, hours_over_50, meeting_load_ratio) are derived from the raw features above at training/inference time. They are not separate schema inputs -- see domain5_burnout_metadata.json's feature_order for the full model-facing feature list."
     },
     "domain_6_severe_clinical": {
       "dataset_source": "ocd_symptoms_clean.csv",
+      "dataset_note": "Real dataset (confirmed), 8304 rows. Raw 'Disease' column (22 distinct values) is the label source, collapsed at training time into 8 clusters -- see MODEL_ARCHITECTURES.md Key Notes and domain6_clinical_metadata.json's cluster_map for the full Disease -> cluster mapping and rationale.",
       "features": [
         "unwanted_thoughts",
         "repetitive_behaviors",
@@ -61,8 +65,11 @@
         "mind_going_blank",
         "avoidance_social_activity",
         "panic",
-        "hypervigilance"
-      ]
+        "hypervigilance",
+        "sleep_disturbances",
+        "low_energy"
+      ],
+      "target_source_column": "Disease"
     }
   }
 }

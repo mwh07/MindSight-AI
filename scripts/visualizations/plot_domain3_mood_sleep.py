@@ -6,7 +6,7 @@ This script loads the unsupervised KMeans model for Domain 3 and the
 nhanes_joined_mood_sleep.csv dataset. It visualizes the AI-discovered 
 clinical phenotypes by plotting PHQ-9 Severity vs Sleep Duration.
 
-Saves plots to: results/aggregate_analysis/
+Saves plots to: results/aggregate_analysis/domain3_mood_sleep/
 """
 
 import os
@@ -34,7 +34,9 @@ def parse_time_to_hours(time_str):
 
 def main():
     print("Generating Phenotype Cluster Plot for Domain 3 (Mood & Sleep)...")
-    out_dir = os.path.join(PROJECT_ROOT, "results", "aggregate_analysis")
+    
+    # ========== NEW: Define dedicated output subfolder ==========
+    out_dir = os.path.join(PROJECT_ROOT, "results", "aggregate_analysis", "domain3_mood_sleep")
     os.makedirs(out_dir, exist_ok=True)
 
     model_path = os.path.join(PROJECT_ROOT, "models", "saved_states", "domain3_mood_sleep.pkl")
@@ -132,6 +134,7 @@ def main():
     
     plt.tight_layout(rect=[0, 0.05, 1, 1])
 
+    # ========== Save to the dedicated folder ==========
     save_path = os.path.join(out_dir, "domain3_phenotype_clusters.png")
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()

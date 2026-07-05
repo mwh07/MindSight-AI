@@ -1,7 +1,25 @@
 {
-  "schema_version": "2.9",
+  "schema_version": "3.0",
   "domain": "domain_5_occupational_burnout",
-  "features": [
+  "feature_order": [
+    "work_hours_per_week",
+    "meetings_per_day",
+    "work_life_balance_score",
+    "job_satisfaction_score",
+    "deadline_pressure_score",
+    "autonomy_score",
+    "stress_score",
+    "social_support_score",
+    "age",
+    "stress_x_support",
+    "hours_over_50",
+    "meeting_load_ratio",
+    "gender_female",
+    "gender_male",
+    "gender_non-binary",
+    "gender_prefer not to say"
+  ],
+  "raw_work_features": [
     "work_hours_per_week",
     "meetings_per_day",
     "work_life_balance_score",
@@ -11,9 +29,71 @@
     "stress_score",
     "social_support_score"
   ],
+  "demographic_features": [
+    "age",
+    "gender"
+  ],
+  "gender_dummy_columns": [
+    "gender_female",
+    "gender_male",
+    "gender_non-binary",
+    "gender_prefer not to say"
+  ],
+  "engineered_features": [
+    "stress_x_support",
+    "hours_over_50",
+    "meeting_load_ratio"
+  ],
+  "monotone_constraints": {
+    "work_hours_per_week": 1,
+    "meetings_per_day": 1,
+    "work_life_balance_score": -1,
+    "job_satisfaction_score": -1,
+    "deadline_pressure_score": 1,
+    "autonomy_score": -1,
+    "stress_score": 1,
+    "social_support_score": -1,
+    "age": 0,
+    "stress_x_support": 1,
+    "hours_over_50": 1,
+    "meeting_load_ratio": 1,
+    "gender_female": 0,
+    "gender_male": 0,
+    "gender_non-binary": 0,
+    "gender_prefer not to say": 0
+  },
+  "tier_order": [
+    "Low",
+    "Moderate",
+    "High",
+    "Severe"
+  ],
+  "ordinal_heads": [
+    ">=Moderate",
+    ">=High",
+    ">=Severe"
+  ],
+  "quantile_levels": [
+    0.1,
+    0.5,
+    0.9
+  ],
   "thresholds": {
     "low_to_moderate": 3.5,
-    "moderate_to_high": 5.5,
-    "high_to_severe": 7.0
-  }
+    "moderate_to_high": 5.4,
+    "high_to_severe": 7.4
+  },
+  "model_files": {
+    "ordinal": {
+      "ge_Moderate": "domain5_ordinal_ge_Moderate.json",
+      "ge_High": "domain5_ordinal_ge_High.json",
+      "ge_Severe": "domain5_ordinal_ge_Severe.json"
+    },
+    "quantile": {
+      "q10": "domain5_quantile_q10.json",
+      "q50": "domain5_quantile_q50.json",
+      "q90": "domain5_quantile_q90.json"
+    }
+  },
+  "notes": "age and gender are included as features. gender is one-hot encoded; age and all gender dummy columns carry NO monotonic constraint (direction not assumed a priori). The 8 work-related raw features plus the 3 engineered features (stress_x_support, hours_over_50, meeting_load_ratio) carry signed monotonic constraints. Tier probabilities at inference time should be derived from the 3 cumulative P[>=tier] outputs via cumulative_probs_to_tier_probs()-style differencing, not from a single point regression."
 }

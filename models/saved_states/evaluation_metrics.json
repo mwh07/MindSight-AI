@@ -94,42 +94,159 @@
     }
   },
   "domain_5_occupational_burnout": {
-    "r2": 0.8193,
-    "rmse": 1.1267,
-    "mae": 0.899,
-    "test_set_size": 12533
+    "ordinal_head": {
+      ">=Moderate": {
+        "accuracy": 0.8482,
+        "log_loss": 0.3207,
+        "positive_rate_train": 0.7409
+      },
+      ">=High": {
+        "accuracy": 0.8461,
+        "log_loss": 0.3296,
+        "positive_rate_train": 0.4798
+      },
+      ">=Severe": {
+        "accuracy": 0.8537,
+        "log_loss": 0.3136,
+        "positive_rate_train": 0.2868
+      }
+    },
+    "quantile_head": {
+      "q0.1": {
+        "pinball_loss": 0.2228
+      },
+      "q0.5": {
+        "pinball_loss": 0.5129
+      },
+      "q0.9": {
+        "pinball_loss": 0.2142
+      }
+    },
+    "median_model_point_estimate": {
+      "r2": 0.7657,
+      "rmse": 1.2891,
+      "mae": 1.0257
+    },
+    "test_set_size": 12533,
+    "fairness_gender_mean_abs_shap": {
+      ">=Moderate__gender_female": 0.02477,
+      ">=Moderate__gender_male": 0.08636,
+      ">=Moderate__gender_non-binary": 0.0095,
+      ">=Moderate__gender_prefer not to say": 0.00291,
+      ">=High__gender_female": 0.03542,
+      ">=High__gender_male": 0.07593,
+      ">=High__gender_non-binary": 0.00414,
+      ">=High__gender_prefer not to say": 0.00183,
+      ">=Severe__gender_female": 0.06997,
+      ">=Severe__gender_male": 0.02233,
+      ">=Severe__gender_non-binary": 0.00489,
+      ">=Severe__gender_prefer not to say": 0.00096
+    }
   },
   "domain_6_severe_clinical": {
-    "logistic_regression": {
-      "accuracy": 0.9982,
-      "macro_f1": 0.6653,
+    "cluster_classifier": {
+      "accuracy": 0.8519,
+      "macro_f1": 0.7625,
       "confusion_matrix": [
         [
-          1305,
+          985,
+          12,
+          7,
+          20,
+          8,
+          6,
+          1,
+          6
+        ],
+        [
+          12,
+          65,
+          0,
+          0,
+          0,
+          0,
+          0,
+          1
+        ],
+        [
+          6,
+          1,
+          48,
+          0,
+          1,
+          0,
+          1,
+          19
+        ],
+        [
+          2,
+          1,
+          0,
+          64,
+          0,
+          1,
+          0,
+          9
+        ],
+        [
+          7,
+          1,
+          0,
+          1,
+          51,
+          2,
+          1,
+          14
+        ],
+        [
+          26,
+          0,
+          0,
+          1,
+          1,
+          49,
           0,
           0
         ],
         [
+          24,
           0,
-          353,
+          0,
+          2,
+          1,
+          1,
+          49,
           0
         ],
         [
+          42,
+          1,
           0,
           3,
-          0
+          1,
+          3,
+          0,
+          104
         ]
       ],
       "class_labels": [
-        0,
-        1,
-        2
+        "No_Detectable_Signal",
+        "OCD_pattern",
+        "Depression_pattern",
+        "GAD_pattern",
+        "PTSD_pattern",
+        "Panic_Dissociative_pattern",
+        "Social_Anxiety_pattern",
+        "Sleep_Disruption_Nonspecific"
       ],
       "test_set_size": 1661
     },
     "isolation_forest": {
-      "anomaly_rate": 0.0465,
-      "note": "Unsupervised; no ground-truth anomaly labels exist, so this reports the realized flagging rate only, not accuracy."
+      "contamination_target": 0.05,
+      "realized_flag_rate": 0.0383,
+      "mean_symptom_count_flagged": 2.396,
+      "mean_symptom_count_not_flagged": 0.384,
+      "sanity_check_note": "If mean_symptom_count_flagged is meaningfully higher than mean_symptom_count_not_flagged, the anomaly flag is tracking the intended construct (unusual/multi-cluster symptom load) rather than something incidental."
     }
   }
 }

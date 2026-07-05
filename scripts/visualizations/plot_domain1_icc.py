@@ -7,7 +7,7 @@ It mathematically extracts the 'alpha' (discrimination) and 'beta' (difficulty t
 and plots the Item Characteristic Curves (ICC) to visually prove how the model interprets 
 patient responses based on their underlying latent trait (Theta).
 
-Generated plots are saved to results/aggregate_analysis/
+Generated plots are saved to results/aggregate_analysis/domain1_icc/
 """
 import os
 import sys
@@ -20,7 +20,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from plot_utils import ensure_output_dir
+# ========== NEW: We no longer need plot_utils for output dir ==========
+# from plot_utils import ensure_output_dir   # <-- REMOVED
 
 def load_domain1_grm():
     model_path = os.path.join(PROJECT_ROOT, "models", "saved_states", "domain1_grm_parameters.pkl")
@@ -93,7 +94,10 @@ def generate_icc_plot(trait_name, item_name, a, b_list, out_dir):
 
 def main():
     print("\n📊 Domain 1 — Personality Psychometrics (GRM-IRT)")
-    out_dir = ensure_output_dir()
+    
+    # ========== NEW: Define dedicated output subfolder ==========
+    out_dir = os.path.join(PROJECT_ROOT, "results", "aggregate_analysis", "domain1_icc")
+    os.makedirs(out_dir, exist_ok=True)
     
     try:
         grm_registry = load_domain1_grm()

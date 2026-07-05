@@ -1,5 +1,5 @@
 {
-  "schema_version": "2.6",
+  "schema_version": "5.0",
   "domain": "domain_6_severe_clinical",
   "features": [
     "unwanted_thoughts",
@@ -8,18 +8,170 @@
     "mind_going_blank",
     "avoidance_social_activity",
     "panic",
-    "hypervigilance"
+    "hypervigilance",
+    "sleep_disturbances",
+    "low_energy"
   ],
-  "classes": [
-    0,
-    1,
-    2
+  "class_order": [
+    "No_Detectable_Signal",
+    "OCD_pattern",
+    "Depression_pattern",
+    "GAD_pattern",
+    "PTSD_pattern",
+    "Panic_Dissociative_pattern",
+    "Social_Anxiety_pattern",
+    "Sleep_Disruption_Nonspecific"
   ],
-  "execution_mode": "production_ovr_wrapped_source_dataset",
-  "source_file_used": "datasets/ocd_symptoms_clean.csv",
+  "cluster_map": {
+    "Obsessive-Compulsive Disorder (OCD)": "OCD_pattern",
+    "Depression": "Depression_pattern",
+    "Generalized Anxiety Disorder (GAD)": "GAD_pattern",
+    "Post-Traumatic Stress Disorder (PTSD)": "PTSD_pattern",
+    "Dissociative Identity Disorder": "Panic_Dissociative_pattern",
+    "Social Anxiety Disorder": "Social_Anxiety_pattern",
+    "Anxiety": "Sleep_Disruption_Nonspecific",
+    "Bipolar Disorder": "Sleep_Disruption_Nonspecific",
+    "No illness": "No_Detectable_Signal",
+    "ADHD (Attention Deficit Hyperactivity Disorder)": "No_Detectable_Signal",
+    "Adjustment Disorder": "No_Detectable_Signal",
+    "Autism Spectrum Disorder": "No_Detectable_Signal",
+    "Borderline Personality Disorder": "No_Detectable_Signal",
+    "Dissociative Amnesia": "No_Detectable_Signal",
+    "Eating Disorder": "No_Detectable_Signal",
+    "Insomnia": "No_Detectable_Signal",
+    "Major Depressive Disorder": "No_Detectable_Signal",
+    "Panic Disorder": "No_Detectable_Signal",
+    "Persistent Depressive Disorder": "No_Detectable_Signal",
+    "Schizophrenia": "No_Detectable_Signal",
+    "Separation Anxiety Disorder": "No_Detectable_Signal",
+    "Substance Use Disorder": "No_Detectable_Signal"
+  },
+  "design_notes": "Raw 22-way Disease label collapsed to 8 classes based on empirical signal analysis of ocd_symptoms_clean.csv: 14 diseases + 'No illness' were statistically indistinguishable (noise-level prevalence on all 9 features) and collapsed to 'No_Detectable_Signal'. Anxiety and Bipolar Disorder were confirmed non-separable (both elevate only sleep_disturbances at ~65-66%, no other differentiating feature) and merged into 'Sleep_Disruption_Nonspecific'. Model 1 predicts the most likely cluster; Model 2 (Isolation Forest) is a separate, complementary signal flagging atypical/multi-cluster symptom presentations, not a severity or rarity score.",
+  "source_file_used": "C:\\Users\\Lenovo\\Desktop\\MINDSIGHT\\datasets\\ocd_symptoms_clean.csv",
+  "is_synthetic_source": false,
+  "coefficients": {
+    "No_Detectable_Signal": {
+      "coef": [
+        -0.9141807692703442,
+        -0.8431742806533302,
+        -0.7601232878083826,
+        -0.919687160174717,
+        -0.8321801929657194,
+        -0.8000892808767586,
+        -0.5185903191964901,
+        -2.768455074459355,
+        -0.5332155668562232
+      ],
+      "intercept": 1.5640511921318618
+    },
+    "OCD_pattern": {
+      "coef": [
+        4.107133415297212,
+        4.353614304506358,
+        -0.3782148154615946,
+        -0.12662368804111748,
+        -2.7733732365697583,
+        -0.8067901559102061,
+        0.687412383767707,
+        -1.0612674547789909,
+        -0.8573990820920634
+      ],
+      "intercept": -0.4040833811303333
+    },
+    "Depression_pattern": {
+      "coef": [
+        -0.9191478754168757,
+        -1.386119243598432,
+        -0.8572047765909445,
+        -0.9542882353727093,
+        0.12064612307848242,
+        -1.3788812690971544,
+        -0.41839385892841663,
+        2.2936110653218305,
+        4.805786874838769
+      ],
+      "intercept": -0.6046446097972422
+    },
+    "GAD_pattern": {
+      "coef": [
+        -0.04031470946863481,
+        0.10298697606587152,
+        4.259159565558457,
+        3.9927145469811856,
+        0.11430010818197239,
+        0.19148526545543312,
+        -1.6360924053255264,
+        2.2173777009970825,
+        -2.372412665231196
+      ],
+      "intercept": -1.4497667286434508
+    },
+    "PTSD_pattern": {
+      "coef": [
+        0.3709438409966513,
+        0.6142809539023881,
+        -0.5016788591969776,
+        -0.1313744454989069,
+        0.028497704588164346,
+        -0.7928318266399326,
+        4.962070794436561,
+        2.3009978650800904,
+        -0.5675304628045174
+      ],
+      "intercept": -0.654533867251904
+    },
+    "Panic_Dissociative_pattern": {
+      "coef": [
+        -0.9415136697129585,
+        -1.3362412969164652,
+        -0.8246753252295186,
+        -0.4450822049879294,
+        -0.22770913558192477,
+        4.561881600263455,
+        -1.2595985011016788,
+        -2.287143836147604,
+        0.4824429438417226
+      ],
+      "intercept": 0.555195775660318
+    },
+    "Social_Anxiety_pattern": {
+      "coef": [
+        -1.1024683926783247,
+        -0.7499646082547012,
+        -0.45041525639354535,
+        -0.4953323157063492,
+        4.508136026397472,
+        -0.8410866586402187,
+        -0.5269780524495522,
+        -2.8992336471754885,
+        0.19119065525531334
+      ],
+      "intercept": 0.4851186252911453
+    },
+    "Sleep_Disruption_Nonspecific": {
+      "coef": [
+        -0.5604518397467146,
+        -0.7553828050517009,
+        -0.48684724487750947,
+        -0.9203264971994503,
+        -0.9383173971287102,
+        -0.13368767455462294,
+        -1.2898300412025983,
+        2.2041133811624354,
+        -1.148862696951818
+      ],
+      "intercept": 0.508662993739122
+    }
+  },
+  "isolation_forest": {
+    "contamination_target": 0.05,
+    "realized_flag_rate": 0.0383,
+    "mean_symptom_count_flagged": 2.396,
+    "mean_symptom_count_not_flagged": 0.384,
+    "sanity_check_note": "If mean_symptom_count_flagged is meaningfully higher than mean_symptom_count_not_flagged, the anomaly flag is tracking the intended construct (unusual/multi-cluster symptom load) rather than something incidental."
+  },
   "payload_contract": {
-    "classifier_key": "classifier",
-    "anomaly_key": "anomaly_detector",
-    "expected_type": "dictionary_multi_stack"
+    "cluster_classifier_key": "cluster_classifier",
+    "isolation_forest_key": "isolation_forest"
   }
 }
