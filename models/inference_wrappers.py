@@ -136,6 +136,8 @@ def evaluate_domain1_personality(raw_payload):
                         p_cat = p_star_full[:, resp - 1] - p_star_full[:, resp]
                         log_lik += np.log(np.clip(p_cat, 1e-9, 1.0))
 
+                    # Apply Bayesian Standard Normal Prior (MAP estimation) to regularize extreme responses
+                    log_lik += -0.5 * (grid ** 2)
                     best_idx = np.argmax(log_lik)
                     mapped_name = trait_mapping.get(trait_name, trait_name)
                     placement[mapped_name] = round(float(grid[best_idx]), 3)
@@ -181,6 +183,7 @@ def evaluate_domain2_self_esteem(raw_payload):
     """
     Processes the Rosenberg Self-Esteem (RSE) Scale across a 0-40 maximum score boundary.
     Converts raw 1-5 Likert to 0-4 scale, applies reverse-scoring to items 3,5,8,9,10.
+    Appends normative percentile lookup based on demographic cohort.
     """
     reverse_scoring_items = [3, 5, 8, 9, 10]
     total_score = 0
@@ -211,12 +214,50 @@ def evaluate_domain2_self_esteem(raw_payload):
         
     item_contributions = sorted(item_contributions, key=lambda x: x["contribution"], reverse=True)
 
+    # Calculate empirical normative percentile
+    normative_percentile = None
+    try:
+        model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain2_self_esteem.pkl")
+        if os.path.exists(model_path):
+            with open(model_path, "rb") as f:
+                percentile_lookup = pickle.load(f)
+            
+            age = float(raw_payload.get("age", 25))
+            if age < 18:
+                a_band = "under_18"
+            elif age <= 25:
+                a_band = "18_25"
+            elif age <= 35:
+                a_band = "26_35"
+            elif age <= 50:
+                a_band = "36_50"
+            elif age <= 65:
+                a_band = "51_65"
+            else:
+                a_band = "over_65"
+            
+            raw_gender = str(raw_payload.get("gender", "0")).strip().lower()
+            if raw_gender in ["1", "1.0", "f", "female"]:
+                g_id = 1
+            elif raw_gender in ["2", "2.0", "nb", "non-binary", "other"]:
+                g_id = 2
+            else:
+                g_id = 0
+                
+            cohort_key = f"g{g_id}_{a_band}"
+            
+            if cohort_key in percentile_lookup:
+                normative_percentile = percentile_lookup[cohort_key].get(str(int(total_score)), 50.0)
+    except Exception as e:
+        print(f"Domain 2 Percentile Lookup Failed: {e}")
+
     return {
         "domain": "domain_2_self_esteem",
         "placement": {
             "score": int(total_score),
             "max_possible_score": 40,
-            "classification": "High Self-Esteem" if total_score >= 30 else ("Normal" if total_score >= 19 else "Low Self-Esteem")
+            "classification": "High Self-Esteem" if total_score >= 30 else ("Normal" if total_score >= 19 else "Low Self-Esteem"),
+            "normative_percentile": normative_percentile
         },
         "top_contributors": item_contributions[:3]
     }
@@ -426,6 +467,16 @@ def evaluate_domain4_multitask(raw_payload):
 
         base_placement["predicted_depression_risk"] = round(pred_depression, 3)
         base_placement["data_source"] = "unified_ml_cross_impact"
+        
+        # Override baseline classification using the ML predictions
+        if pred_depression >= 15.0:
+            base_placement["classification"] = "High Cross-Impact Depression Risk"
+        elif pred_iat >= 50.0:
+            base_placement["classification"] = "Elevated Digital Dependency"
+        elif pred_lone > 18.0:
+            base_placement["classification"] = "Elevated Social Isolation"
+        else:
+            base_placement["classification"] = "Baseline Cohort Profile"
 
         return {
             "domain": "domain_4_digital_and_social",
@@ -647,12 +698,21 @@ def evaluate_domain6_clinical(raw_payload):
         
     contributors = sorted(contributors, key=lambda x: x["contribution"], reverse=True)
     
+    try:
+        class_order = metadata.get("class_order", [])
+        if 0 <= predicted_condition < len(class_order):
+            condition_label = class_order[predicted_condition]
+        else:
+            condition_label = "Unknown Cluster"
+    except Exception:
+        condition_label = "Evaluation Pending"
+        
     return {
         "domain": "domain_6_severe_clinical",
         "placement": {
-            "predicted_condition_code": predicted_condition,
-            "predicted_condition_label": CLINICAL_SEVERITY_MAP.get(predicted_condition, "Evaluation Pending"),
-            "anomaly_review_flag": anomaly_flag
+            "predicted_condition_code": int(predicted_condition),
+            "predicted_condition_label": condition_label,
+            "anomaly_review_flag": bool(anomaly_flag)
         },
         "top_contributors": contributors[:3]
     }
