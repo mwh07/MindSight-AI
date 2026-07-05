@@ -443,16 +443,15 @@ def evaluate_domain4_multitask(raw_payload):
 
         
 # =====================================================================
-# DOMAIN 5: OCCUPATIONAL BURNOUT GRADIENT ENGINE (UNTOUCHED)
+# DOMAIN 5: OCCUPATIONAL BURNOUT GRADIENT ENGINE
 # =====================================================================
 def evaluate_domain5_burnout(raw_payload):
     """
-    Evaluates continuous occupational burnout indices using XGBoost.
+    Evaluates occupational burnout using Ordinal and Quantile XGBoost models.
     """
-    model_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain5_burnout.json")
     meta_path = os.path.join(os.path.dirname(__file__), "saved_states", "domain5_burnout_metadata.json")
     
-    if not os.path.exists(model_path) or not os.path.exists(meta_path):
+    if not os.path.exists(meta_path):
         return {
             "domain": "domain_5_occupational_burnout",
             "placement": {"burnout_index": 5.0, "burnout_tier_label": "Unavailable", "tier_thresholds": None},
@@ -462,36 +461,97 @@ def evaluate_domain5_burnout(raw_payload):
     with open(meta_path, "r") as f:
         metadata = json.load(f)
         
-    features = metadata["features"]
-    thresholds = metadata["thresholds"]
+    # Prepare features as per metadata
+    # Numeric features
+    row_dict = {}
+    for col in metadata["raw_work_features"] + ["age"]:
+        raw_val = raw_payload.get(col, 3.0 if "score" in col else (30.0 if col == "age" else 0.0))
+        try:
+            row_dict[col] = float(raw_val)
+        except (ValueError, TypeError):
+            row_dict[col] = 3.0 if "score" in col else (30.0 if col == "age" else 0.0)
+
+    # Engineered features
+    row_dict["stress_x_support"] = row_dict.get("stress_score", 3.0) * row_dict.get("social_support_score", 3.0)
+    work_hrs = row_dict.get("work_hours_per_week", 40.0)
+    row_dict["hours_over_50"] = max(0.0, work_hrs - 50.0)
+    row_dict["meeting_load_ratio"] = (row_dict.get("meetings_per_day", 0.0) / work_hrs) if work_hrs > 0 else 0.0
     
-    input_row = []
-    for f_name in features:
-        input_row.append(float(raw_payload.get(f_name, 3.0 if "score" in f_name else 30.0)))
+    # Gender dummies
+    gender_val = str(raw_payload.get("gender", "")).strip().lower()
+    gender_map = {"0": "male", "1": "female", "2": "non-binary", "m": "male", "f": "female", "male": "male", "female": "female"}
+    gender_val = gender_map.get(gender_val, gender_val)
+    
+    for col in metadata["gender_dummy_columns"]:
+        if gender_val in col.lower():
+            row_dict[col] = 1.0
+        else:
+            row_dict[col] = 0.0
+
+    # Ensure correct feature order
+    input_row = [row_dict.get(f, 0.0) for f in metadata["feature_order"]]
+    df_row = pd.DataFrame([input_row], columns=metadata["feature_order"])
+    
+    # Load point estimate (quantile 0.50) model
+    q50_filename = metadata["model_files"]["quantile"].get("q50")
+    if not q50_filename:
+        return {
+            "domain": "domain_5_occupational_burnout",
+            "placement": {"burnout_index": 5.0, "burnout_tier_label": "Unavailable", "tier_thresholds": None},
+            "top_contributors": []
+        }
+    
+    q50_path = os.path.join(os.path.dirname(__file__), "saved_states", q50_filename)
+    if not os.path.exists(q50_path):
+        return {
+            "domain": "domain_5_occupational_burnout",
+            "placement": {"burnout_index": 5.0, "burnout_tier_label": "Unavailable", "tier_thresholds": None},
+            "top_contributors": []
+        }
         
-    df_row = pd.DataFrame([input_row], columns=features)
-    
-    bst = xgb.Booster()
-    bst.load_model(model_path)
+    bst_median = xgb.Booster()
+    bst_median.load_model(q50_path)
     dmat = xgb.DMatrix(df_row)
-    pred_score = float(bst.predict(dmat)[0])
+    pred_score = float(bst_median.predict(dmat)[0])
+
+    # Load ordinal heads to determine tier probabilities
+    tier_probs = {}
+    for label, filename in metadata["model_files"]["ordinal"].items():
+        bst_ord = xgb.Booster()
+        bst_ord.load_model(os.path.join(os.path.dirname(__file__), "saved_states", filename))
+        tier_probs[label] = float(bst_ord.predict(dmat)[0])
+
+    p_ge_mod = tier_probs.get("ge_Moderate", 0.0)
+    p_ge_high = tier_probs.get("ge_High", 0.0)
+    p_ge_severe = tier_probs.get("ge_Severe", 0.0)
     
-    if pred_score >= thresholds["high_to_severe"]:
-        lvl = "Severe Burnout Indication"
-    elif pred_score >= thresholds["moderate_to_high"]:
-        lvl = "High Burnout Risk"
-    elif pred_score >= thresholds["low_to_moderate"]:
-        lvl = "Moderate Burnout Profile"
-    else:
-        lvl = "Low / Controlled Engagement Profile"
+    # Cumulative to class probs
+    p_low = 1.0 - p_ge_mod
+    p_mod = p_ge_mod - p_ge_high
+    p_high = p_ge_high - p_ge_severe
+    p_severe = p_ge_severe
+    
+    # Clamp and normalize
+    probs = np.clip(np.array([p_low, p_mod, p_high, p_severe]), 0, None)
+    if np.sum(probs) > 0:
+        probs = probs / np.sum(probs)
+    
+    best_tier_idx = np.argmax(probs)
+    tier_labels = [
+        "Low / Controlled Engagement Profile", 
+        "Moderate Burnout Profile", 
+        "High Burnout Risk", 
+        "Severe Burnout Indication"
+    ]
+    lvl = tier_labels[best_tier_idx]
 
     contributors = []
     try:
-        explainer = shap.TreeExplainer(bst)
+        explainer = shap.TreeExplainer(bst_median)
         shap_values = explainer.shap_values(df_row)
         row_shap = shap_values[0] if not isinstance(shap_values, list) else shap_values[0][0]
 
-        for idx, f_name in enumerate(features):
+        for idx, f_name in enumerate(metadata["feature_order"]):
             try:
                 weight = float(row_shap[idx])
             except (IndexError, TypeError, ValueError):
@@ -502,9 +562,9 @@ def evaluate_domain5_burnout(raw_payload):
                 "contribution": round(float(abs(weight)), 4),
                 "direction": "+" if weight >= 0 else "-"
             })
-    except Exception:
-        for f_name in features:
-            raw_val = float(raw_payload.get(f_name, 3.0 if "score" in f_name else 30.0))
+    except Exception as e:
+        print(f"SHAP Error in Domain 5: {e}")
+        for f_name in metadata["feature_order"]:
             contributors.append({
                 "feature": f_name,
                 "display_name": get_display_name(f_name),
@@ -517,11 +577,7 @@ def evaluate_domain5_burnout(raw_payload):
         "placement": {
             "burnout_index": round(pred_score, 3),
             "burnout_tier_label": lvl,
-            "tier_thresholds": {
-                "low_to_moderate": thresholds["low_to_moderate"],
-                "moderate_to_high": thresholds["moderate_to_high"],
-                "high_to_severe": thresholds["high_to_severe"]
-            }
+            "tier_thresholds": metadata.get("thresholds", None)
         },
         "top_contributors": sorted(contributors, key=lambda x: x["contribution"], reverse=True)[:3]
     }
@@ -556,8 +612,8 @@ def evaluate_domain6_clinical(raw_payload):
             
     input_arr = np.array([input_vector])
     
-    classifier = model_payload["classifier"]
-    anomaly_detector = model_payload["anomaly_detector"]
+    classifier = model_payload["cluster_classifier"]
+    anomaly_detector = model_payload["isolation_forest"]
     
     predicted_condition = int(classifier.predict(input_arr)[0])
     anomaly_score = anomaly_detector.predict(input_arr)[0]

@@ -257,7 +257,9 @@ def run_imp70_assessment():
         ("mind_going_blank", "Cognitive paralysis or loss of memory continuity during stress situations."),
         ("avoidance_social_activity", "Active avoidance of social events, crowds, or public areas out of distress."),
         ("panic", "Sudden, unprovoked surges of overwhelming physical terror or heart palpitations."),
-        ("hypervigilance", "Continuous high-alert monitoring of surroundings to guard against threats.")
+        ("hypervigilance", "Continuous high-alert monitoring of surroundings to guard against threats."),
+        ("sleep_disturbances", "Significant difficulty falling asleep, staying asleep, or experiencing restorative sleep."),
+        ("low_energy", "Persistent physical and mental fatigue, even after sufficient rest.")
     ]
     
     for col_id, question in clinical_items:
@@ -294,7 +296,7 @@ def run_imp70_assessment():
         'work_hours_per_week', 'meetings_per_day', 'work_life_balance_score', 'job_satisfaction_score', 
         'deadline_pressure_score', 'autonomy_score', 'stress_score', 'social_support_score',
         'unwanted_thoughts', 'repetitive_behaviors', 'overthinking', 'mind_going_blank', 
-        'avoidance_social_activity', 'panic', 'hypervigilance'
+        'avoidance_social_activity', 'panic', 'hypervigilance', 'sleep_disturbances', 'low_energy'
     ]
 
     # Dynamically align formatting if checking the long-term history ledger file matrix

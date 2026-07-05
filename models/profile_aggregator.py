@@ -628,7 +628,7 @@ if __name__ == "__main__":
         "work_hours_per_week": 45, "meetings_per_day": 4, "work_life_balance_score": 2, "job_satisfaction_score": 3,
         "deadline_pressure_score": 4, "autonomy_score": 2, "stress_score": 4, "social_support_score": 3,
         "unwanted_thoughts": 1, "repetitive_behaviors": 0, "overthinking": 1, "mind_going_blank": 0,
-        "avoidance_social_activity": 0, "panic": 1, "hypervigilance": 0
+        "avoidance_social_activity": 0, "panic": 1, "hypervigilance": 0, "sleep_disturbances": 0, "low_energy": 1
     }
     print("🧪 Running profile aggregator verification loop against v4.0 updates...")
     test_output = generate_full_profile(sample_payload)
