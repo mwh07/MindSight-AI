@@ -282,26 +282,6 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Global Synthesis Alert */}
-          {globalSynthesis && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="mb-8"
-            >
-              <div className="p-5 sm:p-6 bg-primary/5 border border-primary/20 rounded-xl shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
-                <h2 className="text-lg font-display font-bold text-foreground flex items-center gap-2 mb-2">
-                  <FileText className="w-5 h-5 text-primary" /> Profile Evaluation Synthesis
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {globalSynthesis}
-                </p>
-              </div>
-            </motion.div>
-          )}
-
           {/* Domain Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             {domainCards.map((card, i) => {
@@ -336,101 +316,8 @@ export default function Dashboard() {
             })}
           </div>
 
-          {/* --- Row 1: Core Metrics (3 Columns) --- */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            
-            {/* Self-Esteem */}
-            <Card className="card-surface h-full">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-display text-foreground">Self-Esteem</CardTitle>
-                <p className="text-sm text-muted-foreground">Rosenberg Scale Assessment</p>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center pt-4">
-                <ScoreGauge
-                  value={selfEsteemData.score || 0}
-                  maxValue={selfEsteemData.max_possible_score || 40}
-                  label={`${selfEsteemData.score || 0}/${selfEsteemData.max_possible_score || 40}`}
-                  sublabel={selfEsteemData.classification || "Unknown"}
-                  color={selfEsteemData.score >= 20 ? "hsl(var(--chart-5))" : "hsl(var(--chart-4))"}
-                  size={160}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Occupational Burnout */}
-            <Card className="card-surface h-full">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-display text-foreground">Occupational Health</CardTitle>
-                <p className="text-sm text-muted-foreground">Workplace Stress & Burnout</p>
-              </CardHeader>
-              <CardContent className="flex flex-col justify-center h-full pb-8">
-                <div>
-                  <div className="flex items-center justify-between mb-5">
-                    <div>
-                      <span className="text-sm font-medium text-muted-foreground">Burnout Index</span>
-                      <p className="text-4xl font-display font-bold text-foreground mt-1">{burnoutData.burnout_index || 0}</p>
-                    </div>
-                    <Badge className={
-                      burnoutData.burnout_index <= (burnoutData.tier_thresholds?.low_to_moderate || 3.5) 
-                        ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200"
-                        : burnoutData.burnout_index <= (burnoutData.tier_thresholds?.moderate_to_high || 5.4) 
-                        ? "bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200"
-                        : "bg-rose-500/10 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border-rose-200"
-                    }>
-                      {burnoutData.burnout_tier_label || "Unknown"}
-                    </Badge>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden shadow-inner">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-1000 ${
-                        burnoutData.burnout_index <= (burnoutData.tier_thresholds?.low_to_moderate || 3.5) 
-                          ? "bg-emerald-500" 
-                          : burnoutData.burnout_index <= (burnoutData.tier_thresholds?.moderate_to_high || 5.4) 
-                          ? "bg-amber-500" 
-                          : "bg-rose-500"
-                      }`}
-                      style={{ width: `${Math.min((burnoutData.burnout_index || 0) / (burnoutData.tier_thresholds?.high_to_severe || 7.4) * 100, 100)}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
-                    <span>0</span>
-                    <span>Mod ({(burnoutData.tier_thresholds?.low_to_moderate || 3.5)})</span>
-                    <span>High ({(burnoutData.tier_thresholds?.moderate_to_high || 5.4)})</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Mood & Sleep (Compact Stack) */}
-            <div className="flex flex-col gap-4">
-              <Card className="card-surface h-full flex-1">
-                <CardContent className="p-5 flex items-center gap-4 h-full">
-                  <div className={`p-3 rounded-xl border ${moodData.phq9_sum <= 4 ? 'bg-emerald-500/10 border-emerald-500/20' : moodData.phq9_sum <= 9 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-rose-500/10 border-rose-500/20'}`}>
-                    <Activity className={`w-6 h-6 ${moodData.phq9_sum <= 4 ? 'text-emerald-600 dark:text-emerald-400' : moodData.phq9_sum <= 9 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Clinical Phenotype</p>
-                    <p className="text-lg font-semibold text-foreground mt-1 leading-tight">{moodData.clinical_phenotype || moodData.severity_label || "Unknown"}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">PHQ-9: {moodData.phq9_sum || 0}</p>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="card-surface h-full flex-1">
-                <CardContent className="p-5 flex items-center gap-4 h-full">
-                  <div className="p-3 bg-accent/10 rounded-xl border border-accent/20">
-                    <Moon className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Calculated Sleep</p>
-                    <p className="text-2xl font-display font-bold text-foreground mt-1">{moodData.calculated_sleep_duration_hours || 0} <span className="text-sm font-normal text-muted-foreground">hrs</span></p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-
-          {/* --- Row 2: Complex Models (2 Columns) --- */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* --- Row 1: Complex Models (2 Columns) --- */}
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Personality Radar */}
             <Card className="card-surface h-full">
               <CardContent className="p-0">
@@ -501,6 +388,106 @@ export default function Dashboard() {
             </Card>
           </div>
 
+          {/* --- Row 2: Core Metrics (3 Columns) --- */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            
+            {/* Self-Esteem */}
+            <Card className="card-surface h-full">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-display text-foreground">Self-Esteem</CardTitle>
+                <p className="text-sm text-muted-foreground">Rosenberg Scale Assessment</p>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center justify-center pt-4">
+                <ScoreGauge
+                  value={selfEsteemData.score || 0}
+                  maxValue={selfEsteemData.max_possible_score || 40}
+                  label={`${selfEsteemData.score || 0}/${selfEsteemData.max_possible_score || 40}`}
+                  sublabel={selfEsteemData.classification || "Unknown"}
+                  color={selfEsteemData.score >= 20 ? "hsl(var(--chart-5))" : "hsl(var(--chart-4))"}
+                  size={160}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Occupational Burnout */}
+            <Card className="card-surface h-full">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-display text-foreground">Occupational Health</CardTitle>
+                <p className="text-sm text-muted-foreground">Workplace Stress & Burnout</p>
+              </CardHeader>
+              <CardContent className="flex flex-col justify-center h-full pb-8">
+                <div>
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <span className="text-sm font-medium text-muted-foreground">Burnout Index</span>
+                      <p className="text-4xl font-display font-bold text-foreground mt-1">{burnoutData.burnout_index || 0}</p>
+                    </div>
+                    <Badge className={
+                      burnoutData.burnout_index <= (burnoutData.tier_thresholds?.low_to_moderate || 3.5) 
+                        ? "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200"
+                        : burnoutData.burnout_index <= (burnoutData.tier_thresholds?.moderate_to_high || 5.4) 
+                        ? "bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200"
+                        : "bg-rose-500/10 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border-rose-200"
+                    }>
+                      {burnoutData.burnout_tier_label || "Unknown"}
+                    </Badge>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden shadow-inner">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        burnoutData.burnout_index <= (burnoutData.tier_thresholds?.low_to_moderate || 3.5) 
+                          ? "bg-emerald-500" 
+                          : burnoutData.burnout_index <= (burnoutData.tier_thresholds?.moderate_to_high || 5.4) 
+                          ? "bg-amber-500" 
+                          : "bg-rose-500"
+                      }`}
+                      style={{ width: `${Math.min((burnoutData.burnout_index || 0) / (burnoutData.tier_thresholds?.high_to_severe || 7.4) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
+                    <span>0</span>
+                    <span>Mod ({(burnoutData.tier_thresholds?.low_to_moderate || 3.5)})</span>
+                    <span>High ({(burnoutData.tier_thresholds?.moderate_to_high || 5.4)})</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Mood & Sleep (Compact Stack) */}
+            <div className="flex flex-col gap-4">
+              <Card className="card-surface h-full flex-1">
+                <CardContent className="p-5 flex items-center gap-4 h-full">
+                  <div className={`p-3 rounded-xl border ${moodData.phq9_sum <= 4 ? 'bg-emerald-500/10 border-emerald-500/20' : moodData.phq9_sum <= 9 ? 'bg-amber-500/10 border-amber-500/20' : 'bg-rose-500/10 border-rose-500/20'}`}>
+                    <Activity className={`w-6 h-6 ${moodData.phq9_sum <= 4 ? 'text-emerald-600 dark:text-emerald-400' : moodData.phq9_sum <= 9 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`} />
+                  </div>
+                  <div className="flex-1 w-full">
+                    <div className="flex justify-between items-start w-full gap-2">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Clinical Phenotype</p>
+                        <p className="text-lg font-semibold text-foreground mt-1 leading-tight">{moodData.clinical_phenotype || moodData.severity_label || "Unknown"}</p>
+                        <p className="text-[11px] text-muted-foreground italic mt-0.5 max-w-[200px]">Diagnostic classification based on standardized PHQ-9 criteria.</p>
+                      </div>
+                      <Badge variant="secondary" className={`whitespace-nowrap font-bold text-[10px] px-2 py-1 shadow-sm ${moodData.phq9_sum <= 4 ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20' : moodData.phq9_sum <= 9 ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20'}`}>
+                        PHQ-9: {moodData.phq9_sum || 0}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="card-surface h-full flex-1">
+                <CardContent className="p-5 flex items-center gap-4 h-full">
+                  <div className="p-3 bg-accent/10 rounded-xl border border-accent/20">
+                    <Moon className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Calculated Sleep</p>
+                    <p className="text-2xl font-display font-bold text-foreground mt-1">{moodData.calculated_sleep_duration_hours || 0} <span className="text-sm font-normal text-muted-foreground">hrs</span></p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
           {/* --- Row 3: Clinical Severity Alert --- */}
           {(clinicalData.anomaly_review_flag || clinicalData.predicted_condition_code == 3) && (
             <motion.div
@@ -509,24 +496,29 @@ export default function Dashboard() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="mb-8"
             >
-              <div className="p-6 bg-rose-500/10 border-2 border-rose-500/30 rounded-xl shadow-sm flex items-start gap-4 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-2 h-full bg-rose-500" />
-                <div className="p-3 bg-rose-500/20 rounded-xl text-rose-600 dark:text-rose-400 flex-shrink-0 mt-1">
-                  <AlertCircle className="w-8 h-8" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-display font-bold text-rose-700 dark:text-rose-400 mb-1">
-                    Clinical Review Recommended
-                  </h3>
-                  <p className="text-sm text-rose-800/80 dark:text-rose-300/80 mb-3 leading-relaxed">
-                    The screening models detected atypical configurations or severe clinical markers (Code: {clinicalData.predicted_condition_code || 0}). 
-                    A differential evaluation is advised.
-                  </p>
-                  <Badge variant="outline" className="bg-background text-rose-600 border-rose-500/30 shadow-sm">
-                    {clinicalData.predicted_condition_label || "Unknown Pattern"}
-                  </Badge>
-                </div>
-              </div>
+              <Card className="card-surface h-full">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-display text-foreground flex items-center gap-2">
+                    <Stethoscope className="w-5 h-5 text-emerald-500" /> Clinical Severity
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">Clinical Review Recommended</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-secondary/20 rounded-xl border border-border/40 gap-4">
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">
+                        Diagnostic Code: {clinicalData.predicted_condition_code || 0}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">
+                        The screening models detected specific clinical markers requiring review.
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="bg-background shadow-sm whitespace-nowrap text-sm px-3 py-1 text-emerald-600 border-emerald-500/30">
+                      {clinicalData.predicted_condition_label || "Unknown Pattern"}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           )}
 
@@ -646,50 +638,72 @@ export default function Dashboard() {
             );
           })()}
 
-          {/* --- Row 5: Dynamic Recommendations & Plain Language --- */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Dynamic Recommendations */}
-            <div className="lg:col-span-2">
-              <h2 className="text-xl font-display font-bold mb-4">Personalized Clinical Recommendations</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {Object.keys(dynamicRecs).map(domainKey => {
-                  if (dynamicRecs[domainKey].recs.length === 0) return null;
+          {/* --- Row 5: Dynamic Recommendations --- */}
+          <div className="mb-8">
+            <h2 className="text-xl font-display font-bold mb-4">Personalized Clinical Recommendations</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(() => {
+                const highRiskRecs = Object.keys(dynamicRecs).filter(key => {
+                  const sev = dynamicRecs[key].severity;
+                  return dynamicRecs[key].recs.length > 0 && (sev === "high" || sev === "severe");
+                });
+                
+                if (highRiskRecs.length === 0) {
                   return (
-                    <RecommendationCard
-                      key={domainKey}
-                      domain={domainKey}
-                      severity={dynamicRecs[domainKey].severity || "moderate"}
-                      recommendations={dynamicRecs[domainKey].recs}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Plain Language Summary */}
-            {plainLanguageSummary && plainLanguageSummary.full_text && (
-              <div className="lg:col-span-1">
-                <h2 className="text-xl font-display font-bold mb-4 opacity-0">Summary</h2>
-                <Card className="card-surface border-l-4 border-l-primary overflow-hidden bg-gradient-to-br from-card to-primary/5 shadow-md h-full">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="p-3 bg-primary/10 rounded-xl border border-primary/20 flex-shrink-0">
-                        <FileText className="w-6 h-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-display font-bold text-xl text-foreground">Narrative Summary</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">Plain language overview</p>
-                      </div>
+                    <div className="col-span-1 sm:col-span-2 lg:col-span-3">
+                      <Card className="card-surface border-emerald-500/20 bg-gradient-to-br from-card to-emerald-500/5 shadow-sm">
+                        <CardContent className="p-6 flex items-start gap-4">
+                          <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+                            <CheckCircle className="w-8 h-8" />
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-display font-bold text-foreground mb-1">
+                              Optimal Clinical Profile
+                            </h3>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              No high or severe risks detected across any evaluated domains. Maintain your current healthy habits and continue routine monitoring.
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                    <p className="text-sm leading-relaxed text-muted-foreground bg-background/50 p-4 rounded-xl border border-border/50">
-                      {plainLanguageSummary.full_text}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                  );
+                }
+
+                return highRiskRecs.map(domainKey => (
+                  <RecommendationCard
+                    key={domainKey}
+                    domain={domainKey}
+                    severity={dynamicRecs[domainKey].severity || "moderate"}
+                    recommendations={dynamicRecs[domainKey].recs}
+                  />
+                ));
+              })()}
+            </div>
           </div>
+
+          {/* --- Row 6: Plain Language Summary --- */}
+          {plainLanguageSummary && plainLanguageSummary.full_text && (
+            <div className="mb-8">
+              <h2 className="text-xl font-display font-bold mb-4">Narrative Summary</h2>
+              <Card className="card-surface border-l-4 border-l-primary overflow-hidden bg-gradient-to-br from-card to-primary/5 shadow-md">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="p-3 bg-primary/10 rounded-xl border border-primary/20 flex-shrink-0">
+                      <FileText className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-bold text-xl text-foreground">Comprehensive Overview</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">Plain language synthesis of all domains</p>
+                    </div>
+                  </div>
+                  <p className="text-[15px] leading-relaxed text-foreground bg-background/80 p-5 rounded-xl border border-primary/20 shadow-sm font-medium">
+                    {plainLanguageSummary.full_text}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Footer Actions */}
           <div className="mt-8 pt-8 border-t border-border/50 mb-8">
